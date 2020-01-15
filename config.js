@@ -1,0 +1,8 @@
+module.exports = {
+  DISCORD_TOKEN: "",
+  TWITCH_CLIENT_ID: "",
+  TWITCH_CLIENT_SECRET: "",
+  WEBHOOK_HOST: "",
+  WEBHOOK_PORT: "",
+  WEBHOOK_SECRET: "",
+};
