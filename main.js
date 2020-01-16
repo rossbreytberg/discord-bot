@@ -17,6 +17,9 @@ async function onMessage(client, message) {
   if (!message.isMentioned(client.user)) {
     return;
   }
+  console.log(
+    `Mentioned by ${message.author.username} in message "${message.content}"`,
+  );
   const [mention, command, ...args] = message.content.split(" ");
   switch (command.toLowerCase()) {
     case "enable_twitch":
