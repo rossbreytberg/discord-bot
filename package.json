@@ -4,7 +4,7 @@
   "description": "A Discord bot.",
   "main": "main.js",
   "author": "Ross Breytberg <ross@rossbreytberg.com>",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "repository": "github:rossbreytberg/discord-bot",
   "dependencies": {
     "discord.js": "^11.5.1",
