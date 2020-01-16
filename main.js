@@ -1,4 +1,4 @@
-const config = require("./config.js");
+const config = require("./config.json");
 const fs = require("fs");
 const Commands = require("./src/Commands.js");
 const DataStore = require("./lib/DataStore.js");
