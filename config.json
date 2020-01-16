@@ -1,5 +1,5 @@
 {
-  "CACHE_DIR": "./cache",
+  "CACHE_PATH": ".",
   "DISCORD_TOKEN": "",
   "TWITCH_CLIENT_ID": "",
   "TWITCH_CLIENT_SECRET": "",

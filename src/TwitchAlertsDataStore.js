@@ -1,8 +1,8 @@
 const config = require("../config.json");
 const DataStore = require("../lib/DataStore.js");
 
-const CACHE_DIR = config.CACHE_DIR;
-const DATA = new DataStore(`${CACHE_DIR}/twitch-alerts.json`);
+const CACHE_DIR = config.CACHE_PATH;
+const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
 
 /**
  * Add a channel to post alerts in
