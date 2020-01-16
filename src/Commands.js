@@ -42,7 +42,7 @@ async function twitchListSubscriptions(message) {
   );
 }
 
-async function twitchSubscribe(arg, message) {
+async function twitchSubscribe(message, arg) {
   const username = arg && arg.toLowerCase();
   if (!username) {
     await message.channel.send(
@@ -65,7 +65,7 @@ async function twitchSubscribe(arg, message) {
   );
 }
 
-async function twitchUnsubscribe(arg, message) {
+async function twitchUnsubscribe(message, arg) {
   const username = arg && arg.toLowerCase();
   if (!username) {
     await message.channel.send(
