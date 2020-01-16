@@ -60,27 +60,9 @@ const handlers = {
       const gameImageUrl = gameInfo && gameInfo.box_art_url;
       const userImageUrl = userInfo && userInfo.profile_image_url;
       const userProfileUrl = TwitchAPI.getUserProfileUrl(username);
-      // Download the stream image and send it as an attachment
-      // Otherwise, it does not display correctly
-      const streamImageFile = fs.createWriteStream(
-        TWITCH_STREAM_IMAGE_FILEPATH,
-      );
-      await new Promise(resolve => {
-        https.get(
-          streamImageUrl
-            .replace("{height}", DISCORD_IMAGE_HEIGHT)
-            .replace("{width}", DISCORD_IMAGE_WIDTH),
-          response => {
-            const download = response.pipe(streamImageFile);
-            download.on("close", resolve);
-          },
-        );
-      });
       const richEmbed = new Discord.RichEmbed()
-        .attachFile(TWITCH_STREAM_IMAGE_FILEPATH)
         .setAuthor(username, userImageUrl, userProfileUrl)
         .setColor(TWITCH_COLOR)
-        .setImage(`attachment://${TWITCH_STREAM_IMAGE_FILE}`)
         .setTitle(title)
         .setURL(userProfileUrl)
         .setFooter(TwitchAPI.getUserProfileUrl(username, true));
@@ -93,6 +75,27 @@ const handlers = {
             .replace("{height}", DISCORD_THUMBNAIL_HEIGHT)
             .replace("{width}", DISCORD_THUMBNAIL_WIDTH),
         );
+      }
+      // Download the stream image and send it as an attachment
+      // Otherwise, it does not display correctly
+      if (streamImageUrl) {
+        const streamImageFile = fs.createWriteStream(
+          TWITCH_STREAM_IMAGE_FILEPATH,
+        );
+        await new Promise(resolve => {
+          https.get(
+            streamImageUrl
+              .replace("{height}", DISCORD_IMAGE_HEIGHT)
+              .replace("{width}", DISCORD_IMAGE_WIDTH),
+            response => {
+              const download = response.pipe(streamImageFile);
+              download.on("close", resolve);
+            },
+          );
+        });
+        richEmbed
+          .attachFile(TWITCH_STREAM_IMAGE_FILEPATH)
+          .setImage(`attachment://${TWITCH_STREAM_IMAGE_FILE}`);
       }
       const messageIDs = [];
       const channelIDsToAlert = TwitchAlertsDataStore.getChannels();
