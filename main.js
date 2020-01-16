@@ -9,6 +9,8 @@ const WebhookHandlers = require("./src/WebhookHandlers.js");
 const WebhookServer = require("./lib/WebhookServer.js");
 
 const DISCORD_TOKEN = Config.get().DISCORD_TOKEN;
+const TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS = Config.get()
+  .TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS;
 
 async function onMessage(client, message) {
   // Only respond to message where the bot is mentioned
@@ -63,11 +65,14 @@ async function init() {
   console.log(`Logged in as ${client.user.tag}!`);
   await WebhookServer.startServer(WebhookHandlers.getHandlers(client));
   // Resubscribe webhooks every 12 hours
-  await resubscribeWebhooks();
-  client.setInterval(resubscribeWebhooks, 43200000);
+  await resubscribeTwitchWebhooks();
+  client.setInterval(
+    resubscribeTwitchWebhooks,
+    TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS * 1000,
+  );
 }
 
-async function resubscribeWebhooks() {
+async function resubscribeTwitchWebhooks() {
   await TwitchAPI.clearWebhookSubscriptions();
   TwitchAlertsDataStore.getUsers().forEach(async username => {
     const userInfo = await TwitchAPI.getUserInfo(username);
