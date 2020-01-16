@@ -56,10 +56,7 @@ async function onMessage(client, message) {
   }
 }
 
-async function init([_, _, configPath]) {
-  if (configPath) {
-    Config.overridePath(configPath);
-  }
+async function init() {
   const client = new Discord.Client();
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
@@ -81,4 +78,4 @@ async function resubscribeWebhooks() {
   });
 }
 
-init(process.argv);
+init();

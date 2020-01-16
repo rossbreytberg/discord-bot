@@ -1,18 +1,17 @@
 const fs = require("fs");
 
-const DEFAULT_CONFIG_PATH = "../config.json";
+const DEFAULT_CONFIG_PATH = "./config.json";
 
-let config = fs.readFileSync(DEFAULT_CONFIG_PATH);
-
-function overridePath(path) {
-  config = fs.readFileSync(path);
-}
+let config = null;
 
 function get() {
-  return config;
+  if (config !== null) {
+    return config;
+  }
+  const configPathOverride = process.argv[2];
+  return JSON.parse(fs.readFileSync(configPathOverride || DEFAULT_CONFIG_PATH));
 }
 
 module.exports = {
   get,
-  overridePath,
 };

@@ -5,7 +5,7 @@ const Discord = require("discord.js");
 const TwitchAlertsDataStore = require("./TwitchAlertsDataStore.js");
 const TwitchAPI = require("../lib/TwitchAPI.js");
 
-const CACHE_PATH = config.CACHE_PATH;
+const CACHE_PATH = Config.get().CACHE_PATH;
 const DISCORD_IMAGE_HEIGHT = 1080;
 const DISCORD_IMAGE_WIDTH = 1920;
 const DISCORD_THUMBNAIL_HEIGHT = 400;
