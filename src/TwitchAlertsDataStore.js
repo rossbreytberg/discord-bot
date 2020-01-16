@@ -92,7 +92,8 @@ function removeChannel(channelID) {
   if (channelIdx === -1) {
     return false;
   }
-  DATA.set("channels", channels.splice(channelIdx, 1));
+  channels.splice(channelIdx, 1);
+  DATA.set("channels", channels);
   return true;
 }
 
@@ -120,7 +121,8 @@ function removeUser(username) {
   if (userIdx === -1) {
     return false;
   }
-  DATA.set("users", users.splice(userIdx, 1));
+  users.splice(userIdx, 1);
+  DATA.set("users", users);
   return true;
 }
 
