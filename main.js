@@ -1,6 +1,6 @@
-const config = require("./config.json");
 const fs = require("fs");
 const Commands = require("./src/Commands.js");
+const Config = require("./src/Config.js");
 const DataStore = require("./lib/DataStore.js");
 const Discord = require("discord.js");
 const TwitchAlertsDataStore = require("./src/TwitchAlertsDataStore.js");
@@ -8,7 +8,7 @@ const TwitchAPI = require("./lib/TwitchAPI.js");
 const WebhookHandlers = require("./src/WebhookHandlers.js");
 const WebhookServer = require("./lib/WebhookServer.js");
 
-const DISCORD_TOKEN = config.DISCORD_TOKEN;
+const DISCORD_TOKEN = Config.get().DISCORD_TOKEN;
 
 async function onMessage(client, message) {
   // Only respond to message where the bot is mentioned
@@ -56,7 +56,10 @@ async function onMessage(client, message) {
   }
 }
 
-async function init() {
+async function init([_, _, configPath]) {
+  if (configPath) {
+    Config.overridePath(configPath);
+  }
   const client = new Discord.Client();
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
@@ -78,4 +81,4 @@ async function resubscribeWebhooks() {
   });
 }
 
-init();
+init(process.argv);

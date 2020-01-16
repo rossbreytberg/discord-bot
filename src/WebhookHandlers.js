@@ -1,6 +1,6 @@
-const config = require("../config.json");
 const fs = require("fs");
 const https = require("https");
+const Config = require("./Config.js");
 const Discord = require("discord.js");
 const TwitchAlertsDataStore = require("./TwitchAlertsDataStore.js");
 const TwitchAPI = require("../lib/TwitchAPI.js");

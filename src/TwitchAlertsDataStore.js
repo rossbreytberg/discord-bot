@@ -1,7 +1,7 @@
-const config = require("../config.json");
+const Config = require("./Config.js");
 const DataStore = require("../lib/DataStore.js");
 
-const CACHE_DIR = config.CACHE_PATH;
+const CACHE_DIR = Config.get().CACHE_PATH;
 const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
 
 /**
