@@ -1,16 +1,18 @@
+const config = require("../config.json");
 const fs = require("fs");
 const https = require("https");
 const Discord = require("discord.js");
 const TwitchAlertsDataStore = require("./TwitchAlertsDataStore.js");
 const TwitchAPI = require("../lib/TwitchAPI.js");
 
+const CACHE_DIR = config.CACHE_DIR;
 const DISCORD_IMAGE_HEIGHT = 1080;
 const DISCORD_IMAGE_WIDTH = 1920;
 const DISCORD_THUMBNAIL_HEIGHT = 400;
 const DISCORD_THUMBNAIL_WIDTH = 300;
 const TWITCH_COLOR = "#6441a5";
 const TWITCH_STREAM_IMAGE_FILE = "twitch-stream-image.jpg";
-const TWITCH_STREAM_IMAGE_FILEPATH = `./cache/${TWITCH_STREAM_IMAGE_FILE}`;
+const TWITCH_STREAM_IMAGE_FILEPATH = `${CACHE_DIR}/${TWITCH_STREAM_IMAGE_FILE}`;
 
 const handlers = {
   "twitch/streams": async (discordClient, urlQuery, payload) => {
