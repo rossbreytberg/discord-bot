@@ -34,6 +34,13 @@ async function twitchListSubscriptions(message) {
     await message.channel.send("This channel is not receiving Twitch alerts.");
     return;
   }
+  const users = TwitchAlertsDataStore.getUsers();
+  if (users.length === 0) {
+    await message.channel.send(
+      "Not currently subscribed to Twitch alerts for any users.",
+    );
+    return;
+  }
   await message.channel.send(
     "Currently subscribed to Twitch alerts for " +
       TwitchAlertsDataStore.getUsers()
