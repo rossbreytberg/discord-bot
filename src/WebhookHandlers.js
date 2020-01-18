@@ -57,7 +57,7 @@ const handlers = {
         TwitchAPI.getGameInfo(gameID),
         TwitchAPI.getUserInfo(username),
       ]);
-      const content = `**${username}** has started streaming on Twitch!`;
+      const content = `**${username}** is streaming on Twitch!`;
       const gameName = gameInfo && gameInfo.name;
       const gameImageUrl = gameInfo && gameInfo.box_art_url;
       const userImageUrl = userInfo && userInfo.profile_image_url;
