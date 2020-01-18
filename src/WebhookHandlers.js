@@ -23,24 +23,26 @@ const handlers = {
     );
     const data = payload.data[0];
     const userID = urlQuery.user_id;
-    // Empty data means the stream is offline, delete all posted alerts about it
+    // Remove existing messages for user, if there are any
+    const messageIDs = TwitchAlertsDataStore.getMessages(userID);
+    await Promise.all(
+      messageIDs.map(async messageID => {
+        await Promise.all(
+          discordClient.channels.map(async channel => {
+            try {
+              const message = await channel.fetchMessage(messageID);
+              if (message) {
+                await message.delete();
+              }
+            } catch (error) {}
+          }),
+        );
+      }),
+    );
+    TwitchAlertsDataStore.removeMessages(userID);
+    // Empty data means the stream is offline, do nothing since we already
+    // deleted all the messages about it above
     if (!data) {
-      const messageIDs = TwitchAlertsDataStore.getMessages(userID);
-      await Promise.all(
-        messageIDs.map(async messageID => {
-          await Promise.all(
-            discordClient.channels.map(async channel => {
-              try {
-                const message = await channel.fetchMessage(messageID);
-                if (message) {
-                  await message.delete();
-                }
-              } catch (error) {}
-            }),
-          );
-        }),
-      );
-      TwitchAlertsDataStore.removeMessages(userID);
       return;
     }
     const {
