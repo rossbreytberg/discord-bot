@@ -30,12 +30,12 @@ const handlers = {
       messages.map(async message => {
         const { messageID, channelID } = message;
         await Promise.all(
-          discordClient.channels.map(async channel => {
+          discordClient.channels.cache.map(async channel => {
             if (channel.id !== channelID) {
               return;
             }
             try {
-              const message = await channel.fetchMessage(messageID);
+              const message = await channel.messages.fetch(messageID);
               if (message) {
                 await message.delete();
               }
@@ -76,7 +76,7 @@ const handlers = {
       const gameImageUrl = gameInfo && gameInfo.box_art_url;
       const userImageUrl = userInfo && userInfo.profile_image_url;
       const userProfileUrl = TwitchAPI.getUserProfileUrl(username);
-      const richEmbed = new Discord.RichEmbed()
+      const richEmbed = new Discord.MessageEmbed()
         .setAuthor(username, userImageUrl, userProfileUrl)
         .setColor(TWITCH_COLOR)
         .setTitle(title)
@@ -110,7 +110,7 @@ const handlers = {
           );
         });
         richEmbed
-          .attachFile(TWITCH_STREAM_IMAGE_FILEPATH)
+          .attachFiles([TWITCH_STREAM_IMAGE_FILEPATH])
           .setImage(`attachment://${TWITCH_STREAM_IMAGE_FILE}`);
       }
       const messages = [];
@@ -118,7 +118,7 @@ const handlers = {
         username.toLowerCase(),
       );
       await Promise.all(
-        discordClient.channels.map(async channel => {
+        discordClient.channels.cache.map(async channel => {
           if (
             channel.type === "text" &&
             channelIDsToAlert.includes(channel.id)
@@ -145,7 +145,7 @@ async function updateChannelLiveSymbols(
   liveChannelsAfter,
 ) {
   await Promise.all(
-    discordClient.channels.map(async channel => {
+    discordClient.channels.cache.map(async channel => {
       const liveSymbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
         channel.id,
       );

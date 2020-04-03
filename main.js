@@ -14,7 +14,7 @@ const TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS = Config.get()
 
 async function onMessage(client, message) {
   // Only respond to message where the bot is mentioned
-  if (!message.isMentioned(client.user)) {
+  if (!message.mentions.has(client.user)) {
     return;
   }
   console.log(
@@ -38,7 +38,7 @@ async function onMessage(client, message) {
       await Commands.twitchSetLiveSymbol(message, args[0]);
       return;
     case "clear_live_symbol":
-      await Commands.twitchUnsetLiveSymbol(message);
+      await Commands.twitchClearLiveSymbol(message);
       return;
     default:
       await message.channel.send(

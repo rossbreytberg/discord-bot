@@ -83,14 +83,27 @@ async function twitchViewLiveSymbol(message) {
 }
 
 async function twitchSetLiveSymbol(message, arg) {
-  TwitchAlertsDataStore.setLiveSymbolForChannel(message.channel.id, arg);
+  if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
+    await message.channel.send(
+      "Cannot set a live symbol for this channel while someone is currently live.",
+    );
+    return;
+  }
+  const symbol = arg.toLowercase();
+  TwitchAlertsDataStore.setLiveSymbolForChannel(message.channel.id, symbol);
   await message.channel.send(
-    `Successfully set ${arg} as the live symbol for this channel. ` +
+    `Successfully set ${symbol} as the live symbol for this channel. ` +
       "It will be appended after the channel name when someone is live.",
   );
 }
 
 async function twitchClearLiveSymbol(message) {
+  if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
+    await message.channel.send(
+      "Cannot clear the live symbol for this channel while someone is currently live.",
+    );
+    return;
+  }
   TwitchAlertsDataStore.clearLiveSymbolForChannel(message.channel.id);
   await message.channel.send(
     "There will no longer be a live symbol for this channel.",
