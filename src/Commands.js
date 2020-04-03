@@ -32,13 +32,13 @@ async function twitchSubscribe(message, args) {
     const userInfo = await TwitchAPI.getUserInfo(username);
     if (!success) {
       await message.channel.send(
-        `${userInfo.display_name} was already subscribed to.`,
+        `**${userInfo.display_name}** was already subscribed to.`,
       );
       return;
     }
     await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
     await message.channel.send(
-      `Successfully subscribed to ${userInfo.display_name}.`,
+      `Successfully subscribed to **${userInfo.display_name}**.`,
     );
   });
 }
@@ -60,22 +60,30 @@ async function twitchUnsubscribe(message, args) {
     const userInfo = await TwitchAPI.getUserInfo(username);
     if (!success) {
       await message.channel.send(
-        `${userInfo.display_name} was already not subscribed to.`,
+        `**${userInfo.display_name}** was already not subscribed to.`,
       );
       return;
     }
     await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
     await message.channel.send(
-      `Successfully unsubscribed from ${userInfo.display_name}.`,
+      `Successfully unsubscribed from **${userInfo.display_name}**.`,
     );
   });
 }
 
-async function twitchSetLiveSymbol(message, arg) {
-  const success = TwitchAlertsDataStore.setLiveSymbolForChannel(
+async function twitchViewLiveSymbol(message) {
+  const symbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
     message.channel.id,
-    arg,
   );
+  if (symbol === null) {
+    await message.channel.send("A live symbol is not set for this channel.");
+    return;
+  }
+  await message.channel.send(`The live symbol for this channel is ${symbol}.`);
+}
+
+async function twitchSetLiveSymbol(message, arg) {
+  TwitchAlertsDataStore.setLiveSymbolForChannel(message.channel.id, arg);
   await message.channel.send(
     `Successfully set ${arg} as the live symbol for this channel. ` +
       "It will be appended after the channel name when someone is live.",
@@ -83,9 +91,7 @@ async function twitchSetLiveSymbol(message, arg) {
 }
 
 async function twitchClearLiveSymbol(message) {
-  const success = TwitchAlertsDataStore.clearLiveSymbolForChannel(
-    message.channel.id,
-  );
+  TwitchAlertsDataStore.clearLiveSymbolForChannel(message.channel.id);
   await message.channel.send(
     "There will no longer be a live symbol for this channel.",
   );
@@ -95,6 +101,7 @@ module.exports = {
   twitchListSubscriptions,
   twitchSubscribe,
   twitchUnsubscribe,
+  twitchViewLiveSymbol,
   twitchSetLiveSymbol,
   twitchClearLiveSymbol,
 };

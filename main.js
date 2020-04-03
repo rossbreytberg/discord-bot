@@ -31,6 +31,9 @@ async function onMessage(client, message) {
     case "unsub":
       await Commands.twitchUnsubscribe(message, args);
       return;
+    case "view_live_symbol":
+      await Commands.twitchViewLiveSymbol(message);
+      return;
     case "set_live_symbol":
       await Commands.twitchSetLiveSymbol(message, args[0]);
       return;
@@ -43,8 +46,9 @@ async function onMessage(client, message) {
           "`list_subs`, " +
           "`sub <username>`, " +
           "`unsub <username>`, " +
+          "`view_live_symbol`, " +
           "`set_live_symbol <symbol>`, and" +
-          "`clear_live_symbol <symbol>`",
+          "`clear_live_symbol`.",
       );
       return;
   }

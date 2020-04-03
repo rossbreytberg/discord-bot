@@ -85,6 +85,22 @@ function unsubscribeChannelToUser(channelID, username) {
 }
 
 /**
+ * Returns all channels with active alerts
+ *
+ * @returns {Array<string>}} channel IDs
+ */
+function getLiveChannels() {
+  const messages = DATA.get("userMessages");
+  const channelIDs = {};
+  Object.keys(messages).forEach(userID => {
+    messages[userID].forEach(message => {
+      channelIDs[message.channelID] = true;
+    });
+  });
+  return Object.keys(channelIDs);
+}
+
+/**
  * Get a symbol to append to the channel name when an alert is active
  *
  * @param {string} channelID
@@ -122,10 +138,10 @@ function clearLiveSymbolForChannel(channelID) {
  * Get currently active alerts about a user
  *
  * @param {string} userID
- * @returns {Array<string>} message IDs
+ * @returns {Array<{channelID: string, messageID: string}>} messages
  */
 function getMessages(userID) {
-  const messages = DATA.get("messages");
+  const messages = DATA.get("userMessages");
   return messages[userID] || [];
 }
 
@@ -133,15 +149,15 @@ function getMessages(userID) {
  * Add a list message alerts sent about a user
  *
  * @param {string} userID
- * @param {Array<string>} messageIDs
+ * @param {Array<{channelID: string, messageID: string}>} messageList
  */
-function addMessages(userID, messageIDs) {
-  const messages = DATA.get("messages");
+function addMessages(userID, messageList) {
+  const messages = DATA.get("userMessages");
   if (messages[userID] === undefined) {
     messages[userID] = [];
   }
-  messages[userID] = messages[userID].concat(messageIDs);
-  DATA.set("messages", messages);
+  messages[userID] = messages[userID].concat(messageList);
+  DATA.set("userMessages", messages);
 }
 
 /**
@@ -150,11 +166,11 @@ function addMessages(userID, messageIDs) {
  * @param {string} userID
  */
 function removeMessages(userID) {
-  const messages = DATA.get("messages");
+  const messages = DATA.get("userMessages");
   if (messages[userID] !== undefined) {
     delete messages[userID];
   }
-  DATA.set("messages", messages);
+  DATA.set("userMessages", messages);
 }
 
 module.exports = {
@@ -163,6 +179,7 @@ module.exports = {
   getChannelsForUser,
   subscribeChannelToUser,
   unsubscribeChannelToUser,
+  getLiveChannels,
   getLiveSymbolForChannel,
   setLiveSymbolForChannel,
   clearLiveSymbolForChannel,
