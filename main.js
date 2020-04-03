@@ -22,40 +22,29 @@ async function onMessage(client, message) {
   );
   const [mention, command, ...args] = message.content.split(" ");
   switch ((command || "").toLowerCase()) {
-    case "enable_twitch":
-    case "enable_twitch_alerts":
-    case "twitch_alerts_enable":
-    case "twitch_enable":
-      await Commands.twitchAlertsEnable(message);
-      return;
-    case "disable_twitch":
-    case "disable_twitch_alerts":
-    case "twitch_alerts_disable":
-    case "twitch_disable":
-      await Commands.twitchAlertsDisable(message);
-      return;
-    case "list_twitch_subs":
-    case "list_twitch_subscriptions":
-    case "twitch_list_subs":
-    case "twitch_list_subscriptions":
+    case "list_subs":
       await Commands.twitchListSubscriptions(message);
       return;
-    case "twitch_sub":
-    case "twitch_subscribe":
-      await Commands.twitchSubscribe(message, args[0]);
+    case "sub":
+      await Commands.twitchSubscribe(message, args);
       return;
-    case "twitch_unsub":
-    case "twitch_unsubscribe":
-      await Commands.twitchUnsubscribe(message, args[0]);
+    case "unsub":
+      await Commands.twitchUnsubscribe(message, args);
+      return;
+    case "set_live_symbol":
+      await Commands.twitchSetLiveSymbol(message, args[0]);
+      return;
+    case "clear_live_symbol":
+      await Commands.twitchUnsetLiveSymbol(message);
       return;
     default:
       await message.channel.send(
         "I don't understand. Valid commands are " +
-          "`enable_twitch_alerts`, " +
-          "`disable_twitch_alerts`, " +
-          "`list_twitch_subs`, " +
-          "`twitch_sub <username>`, and " +
-          "`twitch_unsub <username>`.",
+          "`list_subs`, " +
+          "`sub <username>`, " +
+          "`unsub <username>`, " +
+          "`set_live_symbol <symbol>`, and" +
+          "`clear_live_symbol <symbol>`",
       );
       return;
   }

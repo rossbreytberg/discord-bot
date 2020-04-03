@@ -41,7 +41,7 @@ const handlers = {
     );
     TwitchAlertsDataStore.removeMessages(userID);
     // Empty data means the stream is offline, do nothing since we already
-    // deleted all the messages about it above
+    // deleted all the messages about it above and cleared the live symbol
     if (!data) {
       return;
     }
@@ -100,7 +100,9 @@ const handlers = {
           .setImage(`attachment://${TWITCH_STREAM_IMAGE_FILE}`);
       }
       const messageIDs = [];
-      const channelIDsToAlert = TwitchAlertsDataStore.getChannels();
+      const channelIDsToAlert = TwitchAlertsDataStore.getChannelsForUser(
+        userID,
+      );
       await Promise.all(
         discordClient.channels.map(async channel => {
           if (
