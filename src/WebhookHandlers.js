@@ -23,26 +23,40 @@ const handlers = {
     );
     const data = payload.data[0];
     const userID = urlQuery.user_id;
+    const liveChannelsBefore = TwitchAlertsDataStore.getLiveChannels();
     // Remove existing messages for user, if there are any
-    const messageIDs = TwitchAlertsDataStore.getMessages(userID);
+    const messages = TwitchAlertsDataStore.getMessages(userID);
     await Promise.all(
-      messageIDs.map(async messageID => {
+      messages.map(async message => {
+        const { messageID, channelID } = message;
         await Promise.all(
-          discordClient.channels.map(async channel => {
+          discordClient.channels.cache.map(async channel => {
+            if (channel.id !== channelID) {
+              return;
+            }
             try {
-              const message = await channel.fetchMessage(messageID);
+              const message = await channel.messages.fetch(messageID);
               if (message) {
                 await message.delete();
               }
-            } catch (error) {}
+            } catch (error) {
+              console.error("Failed to delete message", messageID, error);
+            }
           }),
         );
       }),
     );
     TwitchAlertsDataStore.removeMessages(userID);
-    // Empty data means the stream is offline, do nothing since we already
-    // deleted all the messages about it above
+    // Empty data means the stream is offline
+    // Deleted all the messages above already
+    // Just need to clear any live symbols for channels that stopped being live
     if (!data) {
+      const liveChannelsAfter = TwitchAlertsDataStore.getLiveChannels();
+      await updateChannelLiveSymbols(
+        discordClient,
+        liveChannelsBefore,
+        liveChannelsAfter,
+      );
       return;
     }
     const {
@@ -62,7 +76,7 @@ const handlers = {
       const gameImageUrl = gameInfo && gameInfo.box_art_url;
       const userImageUrl = userInfo && userInfo.profile_image_url;
       const userProfileUrl = TwitchAPI.getUserProfileUrl(username);
-      const richEmbed = new Discord.RichEmbed()
+      const richEmbed = new Discord.MessageEmbed()
         .setAuthor(username, userImageUrl, userProfileUrl)
         .setColor(TWITCH_COLOR)
         .setTitle(title)
@@ -96,26 +110,82 @@ const handlers = {
           );
         });
         richEmbed
-          .attachFile(TWITCH_STREAM_IMAGE_FILEPATH)
+          .attachFiles([TWITCH_STREAM_IMAGE_FILEPATH])
           .setImage(`attachment://${TWITCH_STREAM_IMAGE_FILE}`);
       }
-      const messageIDs = [];
-      const channelIDsToAlert = TwitchAlertsDataStore.getChannels();
+      const messages = [];
+      const channelIDsToAlert = TwitchAlertsDataStore.getChannelsForUser(
+        username.toLowerCase(),
+      );
       await Promise.all(
-        discordClient.channels.map(async channel => {
+        discordClient.channels.cache.map(async channel => {
           if (
             channel.type === "text" &&
             channelIDsToAlert.includes(channel.id)
           ) {
             const message = await channel.send(content, richEmbed);
-            messageIDs.push(message.id);
+            messages.push({ channelID: channel.id, messageID: message.id });
           }
         }),
       );
-      TwitchAlertsDataStore.addMessages(userID, messageIDs);
+      TwitchAlertsDataStore.addMessages(userID, messages);
+      const liveChannelsAfter = TwitchAlertsDataStore.getLiveChannels();
+      await updateChannelLiveSymbols(
+        discordClient,
+        liveChannelsBefore,
+        liveChannelsAfter,
+      );
     }
   },
 };
+
+async function updateChannelLiveSymbols(
+  discordClient,
+  liveChannelsBefore,
+  liveChannelsAfter,
+) {
+  await Promise.all(
+    discordClient.channels.cache.map(async channel => {
+      const liveSymbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
+        channel.id,
+      );
+      if (liveSymbol === null) {
+        return;
+      }
+      const wasLive = liveChannelsBefore.includes(channel.id);
+      const isLive = liveChannelsAfter.includes(channel.id);
+      if (wasLive && !isLive) {
+        // Remove live symbol if a channel stopped being live
+        if (channel.name.endsWith(liveSymbol)) {
+          try {
+            await channel.setName(
+              channel.name.substr(0, channel.name.length - liveSymbol.length),
+            );
+          } catch (e) {
+            console.error(
+              "Failed to remove live symbol from channel",
+              channel.id,
+              e,
+            );
+          }
+        }
+      } else if (!wasLive && isLive) {
+        // Add live symbol if a channel started being live
+        if (!channel.name.endsWith(liveSymbol)) {
+          try {
+            await channel.setName(channel.name + liveSymbol);
+          } catch (e) {
+            console.error(
+              "Failed to add live symbol to channel",
+              channel.id,
+              e,
+            );
+          }
+        }
+      }
+    }),
+  );
+}
 
 module.exports = {
   getHandlers: discordClient => {

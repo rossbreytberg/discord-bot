@@ -5,96 +5,159 @@ const CACHE_PATH = Config.get().CACHE_PATH;
 const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
 
 /**
- * Add a channel to post alerts in
+ * Get all users about which any channel is receiving alerts
  *
- * @param {string} channelID
- * @returns {boolean} True if added successfully, false if it was already added
+ * @returns {Array<string>} usernames
  */
-function addChannel(channelID) {
-  const channels = DATA.get("channels");
-  if (channels.includes(channelID)) {
-    return false;
-  }
-  channels.push(channelID);
-  DATA.set("channels", channels);
-  return true;
+function getUsers() {
+  const channelUsers = DATA.get("channelUsers");
+  const userSet = {};
+  Object.keys(channelUsers).forEach(channelID => {
+    getUsersForChannel(channelID).forEach(username => {
+      userSet[username] = true;
+    });
+  });
+  return Object.keys(userSet);
 }
 
 /**
- * Add a list message alerts sent about a user
+ * Get all users about which this channel is receiving alerts
  *
- * @param {string} userID
- * @param {Array<string>} messageIDs
+ * @returns {Array<string>} usernames
  */
-function addMessages(userID, messageIDs) {
-  const messages = DATA.get("messages");
-  if (messages[userID] === undefined) {
-    messages[userID] = [];
-  }
-  messages[userID] = messages[userID].concat(messageIDs);
-  DATA.set("messages", messages);
+function getUsersForChannel(channelID) {
+  const channelUsers = DATA.get("channelUsers");
+  return channelUsers[channelID] || [];
 }
 
 /**
- * Add a user to send alerts about them
- *
- * @param {string} username
- * @returns {boolean} True if added successfully, false if it was already added
- */
-function addUser(username) {
-  const users = DATA.get("users");
-  if (users.includes(username)) {
-    return false;
-  }
-  users.push(username);
-  DATA.set("users", users);
-  return true;
-}
-
-/**
- * Get all channels currently receiving alerts
+ * Get all channels receiving alerts about this user
  *
  * @returns {Array<string>} channel IDs
  */
-function getChannels() {
-  return DATA.get("channels");
+function getChannelsForUser(username) {
+  const channelUsers = DATA.get("channelUsers");
+  return Object.keys(channelUsers).filter(channelID =>
+    getUsersForChannel(channelID).includes(username),
+  );
+}
+
+/**
+ * Subscribe a channel to receive alerts about a user
+ *
+ * @param {string} channelID
+ * @param {string} username
+ * @returns {boolean} True if subscribed successfully, false if it was already subscribed
+ */
+function subscribeChannelToUser(channelID, username) {
+  const channelUsers = DATA.get("channelUsers");
+  if (channelUsers[channelID] === undefined) {
+    channelUsers[channelID] = [];
+  }
+  if (channelUsers[channelID].includes(username)) {
+    return false;
+  }
+  channelUsers[channelID].push(username);
+  DATA.set("channelUsers", channelUsers);
+  return true;
+}
+
+/**
+ * Unsubscribe a channel to stop receiving alerts about a user
+ *
+ * @param {string} channelID
+ * @param {string} username
+ * @returns {boolean} True if unsubscribed successfully, false if it was already not subscribed
+ */
+function unsubscribeChannelToUser(channelID, username) {
+  const channelUsers = DATA.get("channelUsers");
+  if (channelUsers[channelID] === undefined) {
+    return false;
+  }
+  if (!channelUsers[channelID].includes(username)) {
+    return false;
+  }
+  channelUsers[channelID] = channelUsers[channelID].filter(
+    subscribedUsername => subscribedUsername !== username,
+  );
+  DATA.set("channelUsers", channelUsers);
+  return true;
+}
+
+/**
+ * Returns all channels with active alerts
+ *
+ * @returns {Array<string>}} channel IDs
+ */
+function getLiveChannels() {
+  const messages = DATA.get("userMessages");
+  const channelIDs = {};
+  Object.keys(messages).forEach(userID => {
+    messages[userID].forEach(message => {
+      channelIDs[message.channelID] = true;
+    });
+  });
+  return Object.keys(channelIDs);
+}
+
+/**
+ * Get a symbol to append to the channel name when an alert is active
+ *
+ * @param {string} channelID
+ * @returns {?string} Symbol like an emoji or character
+ */
+function getLiveSymbolForChannel(channelID) {
+  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  return channelLiveSymbols[channelID] || null;
+}
+
+/**
+ * Set a symbol to append to the channel name when an alert is active
+ *
+ * @param {string} channelID
+ * @param {string} symbol
+ */
+function setLiveSymbolForChannel(channelID, symbol) {
+  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  channelLiveSymbols[channelID] = symbol;
+  DATA.set("channelLiveSymbols", channelLiveSymbols);
+}
+
+/**
+ * Clear the symbol to append to the channel name when an alert is active
+ *
+ * @param {string} channelID
+ */
+function clearLiveSymbolForChannel(channelID) {
+  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  delete channelLiveSymbols[channelID];
+  DATA.set("channelLiveSymbols", channelLiveSymbols);
 }
 
 /**
  * Get currently active alerts about a user
  *
  * @param {string} userID
- * @returns {Array<string>} message IDs
+ * @returns {Array<{channelID: string, messageID: string}>} messages
  */
 function getMessages(userID) {
-  const messages = DATA.get("messages");
+  const messages = DATA.get("userMessages");
   return messages[userID] || [];
 }
 
 /**
- * Get a list of users to send alerts about
+ * Add a list message alerts sent about a user
  *
- * @returns {Array<string>} user IDs
+ * @param {string} userID
+ * @param {Array<{channelID: string, messageID: string}>} messageList
  */
-function getUsers() {
-  return DATA.get("users");
-}
-
-/**
- * Remove a channel from getting alerts
- *
- * @param {string} channelID
- * @returns {boolean} True if removed successfully, false if was already absent
- */
-function removeChannel(channelID) {
-  const channels = DATA.get("channels");
-  const channelIdx = channels.indexOf(channelID);
-  if (channelIdx === -1) {
-    return false;
+function addMessages(userID, messageList) {
+  const messages = DATA.get("userMessages");
+  if (messages[userID] === undefined) {
+    messages[userID] = [];
   }
-  channels.splice(channelIdx, 1);
-  DATA.set("channels", channels);
-  return true;
+  messages[userID] = messages[userID].concat(messageList);
+  DATA.set("userMessages", messages);
 }
 
 /**
@@ -103,37 +166,24 @@ function removeChannel(channelID) {
  * @param {string} userID
  */
 function removeMessages(userID) {
-  const messages = DATA.get("messages");
+  const messages = DATA.get("userMessages");
   if (messages[userID] !== undefined) {
     delete messages[userID];
   }
-}
-
-/**
- * Remove a user to stop sending alerts about them
- *
- * @param {string} username
- * @returns {boolean} True if removed successfully, false if was already absent
- */
-function removeUser(username) {
-  const users = DATA.get("users");
-  const userIdx = users.indexOf(username);
-  if (userIdx === -1) {
-    return false;
-  }
-  users.splice(userIdx, 1);
-  DATA.set("users", users);
-  return true;
+  DATA.set("userMessages", messages);
 }
 
 module.exports = {
-  addChannel,
-  addMessages,
-  addUser,
-  getChannels,
-  getMessages,
   getUsers,
-  removeChannel,
+  getUsersForChannel,
+  getChannelsForUser,
+  subscribeChannelToUser,
+  unsubscribeChannelToUser,
+  getLiveChannels,
+  getLiveSymbolForChannel,
+  setLiveSymbolForChannel,
+  clearLiveSymbolForChannel,
+  getMessages,
+  addMessages,
   removeMessages,
-  removeUser,
 };

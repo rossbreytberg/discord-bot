@@ -1,104 +1,120 @@
 const TwitchAlertsDataStore = require("./TwitchAlertsDataStore.js");
 const TwitchAPI = require("../lib/TwitchAPI.js");
 
-async function twitchAlertsDisable(message) {
-  const success = TwitchAlertsDataStore.removeChannel(message.channel.id);
-  if (!success) {
-    await message.channel.send(
-      "Your action did nothing. " +
-        "This channel was already not receiving Twitch alerts.",
-    );
-    return;
-  }
-  await message.channel.send(
-    "This channel will no longer receive Twitch alerts.",
-  );
-}
-
-async function twitchAlertsEnable(message) {
-  const success = TwitchAlertsDataStore.addChannel(message.channel.id);
-  if (!success) {
-    await message.channel.send(
-      "Your action did nothing. This channel already receives Twitch alerts.",
-    );
-    return;
-  }
-  await message.channel.send(
-    "This channel will now receive Twitch alerts " +
-      "when subscribed users start streaming.",
-  );
-}
-
 async function twitchListSubscriptions(message) {
-  if (!TwitchAlertsDataStore.getChannels().includes(message.channel.id)) {
-    await message.channel.send("This channel is not receiving Twitch alerts.");
-    return;
-  }
-  const users = TwitchAlertsDataStore.getUsers();
+  const users = TwitchAlertsDataStore.getUsersForChannel(message.channel.id);
   if (users.length === 0) {
     await message.channel.send(
-      "Not currently subscribed to Twitch alerts for any users.",
+      "This channel is not subscribed to Twitch alerts for any users.",
     );
     return;
   }
   await message.channel.send(
     "Currently subscribed to Twitch alerts for " +
-      TwitchAlertsDataStore.getUsers()
-        .map(username => `**${username}**`)
-        .join(", "),
+      users.map(username => `**${username}**`).join(", "),
   );
 }
 
-async function twitchSubscribe(message, arg) {
-  const username = arg && arg.toLowerCase();
-  if (!username) {
+async function twitchSubscribe(message, args) {
+  const usernames = args.map(arg => arg.toLowerCase());
+  if (usernames.length === 0) {
     await message.channel.send(
       "Please provide a username to subscribe to. " +
-        "For example, `twitch_subscribe cheezmasta125`.",
+        "For example, `sub warslaughters`.",
     );
     return;
   }
-  const success = TwitchAlertsDataStore.addUser(username);
-  if (!success) {
+  usernames.forEach(async username => {
+    const success = TwitchAlertsDataStore.subscribeChannelToUser(
+      message.channel.id,
+      username,
+    );
+    const userInfo = await TwitchAPI.getUserInfo(username);
+    if (!success) {
+      await message.channel.send(
+        `**${userInfo.display_name}** was already subscribed to.`,
+      );
+      return;
+    }
+    await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
     await message.channel.send(
-      "Your action did nothing. " + "This user was already subscribed to.",
+      `Successfully subscribed to **${userInfo.display_name}**.`,
+    );
+  });
+}
+
+async function twitchUnsubscribe(message, args) {
+  const usernames = args.map(arg => arg.toLowerCase());
+  if (usernames.length === 0) {
+    await message.channel.send(
+      "Please provide a username to unsubscribe from. " +
+        "For example, `unsub cheezmasta125`.",
     );
     return;
   }
-  const userInfo = await TwitchAPI.getUserInfo(username);
-  await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
+  usernames.forEach(async username => {
+    const success = TwitchAlertsDataStore.unsubscribeChannelToUser(
+      message.channel.id,
+      username,
+    );
+    const userInfo = await TwitchAPI.getUserInfo(username);
+    if (!success) {
+      await message.channel.send(
+        `**${userInfo.display_name}** was already not subscribed to.`,
+      );
+      return;
+    }
+    await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
+    await message.channel.send(
+      `Successfully unsubscribed from **${userInfo.display_name}**.`,
+    );
+  });
+}
+
+async function twitchViewLiveSymbol(message) {
+  const symbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
+    message.channel.id,
+  );
+  if (symbol === null) {
+    await message.channel.send("A live symbol is not set for this channel.");
+    return;
+  }
+  await message.channel.send(`The live symbol for this channel is ${symbol}.`);
+}
+
+async function twitchSetLiveSymbol(message, arg) {
+  if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
+    await message.channel.send(
+      "Cannot set a live symbol for this channel while someone is currently live.",
+    );
+    return;
+  }
+  const symbol = arg.toLowercase();
+  TwitchAlertsDataStore.setLiveSymbolForChannel(message.channel.id, symbol);
   await message.channel.send(
-    `Successfully subscribed to ${userInfo.display_name}.`,
+    `Successfully set ${symbol} as the live symbol for this channel. ` +
+      "It will be appended after the channel name when someone is live.",
   );
 }
 
-async function twitchUnsubscribe(message, arg) {
-  const username = arg && arg.toLowerCase();
-  if (!username) {
+async function twitchClearLiveSymbol(message) {
+  if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
     await message.channel.send(
-      "Please provide a username to unsubscribe from. " +
-        "For example, `twitch_unsubscribe cheezmasta125`.",
+      "Cannot clear the live symbol for this channel while someone is currently live.",
     );
     return;
   }
-  const success = TwitchAlertsDataStore.removeUser(username);
-  if (!success) {
-    await message.channel.send(
-      "Your action did nothing. " + "This user was not subscribed to.",
-    );
-    return;
-  }
-  const userInfo = await TwitchAPI.getUserInfo(username);
-  await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
+  TwitchAlertsDataStore.clearLiveSymbolForChannel(message.channel.id);
   await message.channel.send(
-    `Successfully unsubscribed from ${userInfo.display_name}.`,
+    "There will no longer be a live symbol for this channel.",
   );
 }
 
 module.exports = {
-  twitchAlertsDisable,
-  twitchAlertsEnable,
   twitchListSubscriptions,
   twitchSubscribe,
   twitchUnsubscribe,
+  twitchViewLiveSymbol,
+  twitchSetLiveSymbol,
+  twitchClearLiveSymbol,
 };
