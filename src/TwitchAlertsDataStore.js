@@ -5,6 +5,22 @@ const CACHE_PATH = Config.get().CACHE_PATH;
 const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
 
 /**
+ * Get all users about which any channel is receiving alerts
+ *  
+ * @returns {Array<string>} usernames
+ */
+function getUsers() {
+  const channelUsers = DATA.get("channelUsers");
+  const userSet = {};
+  Object.keys(channelUsers).forEach(channelID => {
+    getUsersForChannel(channelID).forEach(username => {
+      userSet[username] = true;
+    });
+  });
+  return Object.keys(userSet);
+}
+
+/**
  * Get all users about which this channel is receiving alerts
  *
  * @returns {Array<string>} usernames
@@ -142,6 +158,7 @@ function removeMessages(userID) {
 }
 
 module.exports = {
+  getUsers,
   getUsersForChannel,
   getChannelsForUser,
   subscribeChannelToUser,
