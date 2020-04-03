@@ -6,7 +6,7 @@ const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
 
 /**
  * Get all users about which any channel is receiving alerts
- *  
+ *
  * @returns {Array<string>} usernames
  */
 function getUsers() {

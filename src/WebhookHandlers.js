@@ -101,7 +101,7 @@ const handlers = {
       }
       const messageIDs = [];
       const channelIDsToAlert = TwitchAlertsDataStore.getChannelsForUser(
-        userID,
+        username,
       );
       await Promise.all(
         discordClient.channels.map(async channel => {
