@@ -89,7 +89,7 @@ async function twitchSetLiveSymbol(message, arg) {
     );
     return;
   }
-  const symbol = arg.toLowercase();
+  const symbol = arg.toLowerCase();
   TwitchAlertsDataStore.setLiveSymbolForChannel(message.channel.id, symbol);
   await message.channel.send(
     `Successfully set ${symbol} as the live symbol for this channel. ` +
