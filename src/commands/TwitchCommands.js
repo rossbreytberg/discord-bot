@@ -1,7 +1,7 @@
-const TwitchAlertsDataStore = require("./TwitchAlertsDataStore.js");
-const TwitchAPI = require("../lib/TwitchAPI.js");
+const TwitchAlertsDataStore = require("./../TwitchAlertsDataStore.js");
+const TwitchAPI = require("../../lib/TwitchAPI.js");
 
-async function twitchListSubscriptions(message) {
+async function listSubscriptions(message) {
   const users = TwitchAlertsDataStore.getUsersForChannel(message.channel.id);
   if (users.length === 0) {
     await message.channel.send(
@@ -15,7 +15,7 @@ async function twitchListSubscriptions(message) {
   );
 }
 
-async function twitchSubscribe(message, args) {
+async function subscribe(message, args) {
   const usernames = args.map(arg => arg.toLowerCase());
   if (usernames.length === 0) {
     await message.channel.send(
@@ -43,7 +43,7 @@ async function twitchSubscribe(message, args) {
   });
 }
 
-async function twitchUnsubscribe(message, args) {
+async function unsubscribe(message, args) {
   const usernames = args.map(arg => arg.toLowerCase());
   if (usernames.length === 0) {
     await message.channel.send(
@@ -71,7 +71,7 @@ async function twitchUnsubscribe(message, args) {
   });
 }
 
-async function twitchViewLiveSymbol(message) {
+async function viewLiveSymbol(message) {
   const symbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
     message.channel.id,
   );
@@ -82,7 +82,7 @@ async function twitchViewLiveSymbol(message) {
   await message.channel.send(`The live symbol for this channel is ${symbol}.`);
 }
 
-async function twitchSetLiveSymbol(message, arg) {
+async function setLiveSymbol(message, arg) {
   if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
     await message.channel.send(
       "Cannot set a live symbol for this channel while someone is currently live.",
@@ -97,7 +97,7 @@ async function twitchSetLiveSymbol(message, arg) {
   );
 }
 
-async function twitchClearLiveSymbol(message) {
+async function clearLiveSymbol(message) {
   if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
     await message.channel.send(
       "Cannot clear the live symbol for this channel while someone is currently live.",
@@ -111,10 +111,10 @@ async function twitchClearLiveSymbol(message) {
 }
 
 module.exports = {
-  twitchListSubscriptions,
-  twitchSubscribe,
-  twitchUnsubscribe,
-  twitchViewLiveSymbol,
-  twitchSetLiveSymbol,
-  twitchClearLiveSymbol,
+  listSubscriptions,
+  subscribe,
+  unsubscribe,
+  viewLiveSymbol,
+  setLiveSymbol,
+  clearLiveSymbol,
 };
