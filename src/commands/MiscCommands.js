@@ -73,8 +73,16 @@ function isMessageInteresting(message) {
   if (message.author.id === message.client.user.id) {
     return false;
   }
-  // Must be at least 30 chars
-  if (message.cleanContent.length < 30) {
+  // Cannot have embeds
+  if (message.embeds) {
+    return false;
+  }
+  // Cannot have attachments
+  if (message.attachments && message.attachments.keyArray().length > 0) {
+    return false;
+  }
+  // Must be at least 25 chars
+  if (message.cleanContent.length < 25) {
     return false;
   }
   return true;
