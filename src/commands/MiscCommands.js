@@ -81,6 +81,13 @@ function isMessageInteresting(message) {
   if (message.attachments && message.attachments.keyArray().length > 0) {
     return false;
   }
+  // Cannot have links
+  if (
+    message.cleanContent.includes("http") ||
+    message.cleanContent.includes("www")
+  ) {
+    return false;
+  }
   // Must be at least 25 chars
   if (message.cleanContent.length < 25) {
     return false;
