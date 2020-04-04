@@ -48,7 +48,7 @@ async function onMessage(client, message) {
       return;
     default:
       await message.channel.send(
-        "I don't understand. Valid commands are " +
+        "Valid commands are " +
           "`quote`, " +
           "`who`, " +
           "`subs`, " +
@@ -80,7 +80,7 @@ async function init() {
 
 async function stopAllTyping(client) {
   await Promise.all(
-    client.channels.cache.array().map(async channel => {
+    client.channels.cache.array().map(async (channel) => {
       if (channel.type === "text") {
         await channel.stopTyping(/*force*/ true);
       }
@@ -90,7 +90,7 @@ async function stopAllTyping(client) {
 
 async function resubscribeTwitchWebhooks() {
   await TwitchAPI.clearWebhookSubscriptions();
-  TwitchAlertsDataStore.getUsers().forEach(async username => {
+  TwitchAlertsDataStore.getUsers().forEach(async (username) => {
     const userInfo = await TwitchAPI.getUserInfo(username);
     const subscribed = await TwitchAPI.setStreamChangeSubscription(
       "subscribe",
