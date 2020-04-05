@@ -10,37 +10,30 @@ async function randomQuote(message) {
   } = Config.get();
   const { channel } = message;
   channel.startTyping();
-  if (channel.messages.cache.size < DISCORD_MESSAGE_CACHE_MAX_SIZE) {
-    console.log(
-      `Message cache has ${channel.messages.cache.size} messages, trying to fetch more for random quote`,
-    );
-    try {
-      // Try to fetch messages
-      const batchesToFetch =
-        DISCORD_MESSAGE_CACHE_MAX_SIZE / DISCORD_MESSAGE_FETCH_LIMIT;
-      let earliestMessageID = null;
-      for (let i = 0; i < batchesToFetch; i++) {
-        let batch = await channel.messages.fetch(
-          {
-            before: earliestMessageID,
-            limit: DISCORD_MESSAGE_FETCH_LIMIT,
-          },
-          /*cache*/ true,
-        );
-        earliestMessageID = batch.lastKey();
-        // If reached the beginning of the channel, stop fetching batches
-        if (batch.size < DISCORD_MESSAGE_FETCH_LIMIT) {
-          break;
-        }
-      }
-    } catch (e) {
-      console.error("Failed to fetch messages for random quote: ", e);
-      await channel.stopTyping();
-      await channel.send(
-        "The archives seem to be malfunctioning. Try again later.",
+  try {
+    // Try to fetch messages
+    let earliestMessageID = null;
+    while (channel.messages.cache.size < DISCORD_MESSAGE_CACHE_MAX_SIZE) {
+      const batch = await channel.messages.fetch(
+        {
+          before: earliestMessageID,
+          limit: DISCORD_MESSAGE_FETCH_LIMIT,
+        },
+        /*cache*/ true,
       );
-      return;
+      earliestMessageID = batch.lastKey();
+      // If reached the beginning of the channel, stop fetching batches
+      if (batch.size < DISCORD_MESSAGE_FETCH_LIMIT) {
+        break;
+      }
     }
+  } catch (e) {
+    console.error("Failed to fetch messages for random quote: ", e);
+    await channel.stopTyping();
+    await channel.send(
+      "The archives seem to be malfunctioning. Try again later.",
+    );
+    return;
   }
   // Try to get an interesting random message
   const messageCollection = channel.messages.cache.clone();
