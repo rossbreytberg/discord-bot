@@ -1,46 +1,53 @@
+const Config = require("../Config.js");
 const Discord = require("discord.js");
 
-const DISCORD_MAX_MESSAGE_FETCH_LIMIT = 100;
-const RANDOM_QUOTE_BATCHES_TO_FETCH = 50;
-
-const lastRandomQuoteByChannel = {};
+const LAST_RANDOM_QUOTE_BY_CHANNEL = {};
 
 async function randomQuote(message) {
-  message.channel.startTyping();
-  let messageCollection = null;
-  let earliestMessageID = null;
-  try {
-    // Try to fetch and combine multiple batches of messages
-    for (let i = 0; i < RANDOM_QUOTE_BATCHES_TO_FETCH; i++) {
-      let batch = await message.channel.messages.fetch(
-        {
-          before: earliestMessageID,
-          limit: DISCORD_MAX_MESSAGE_FETCH_LIMIT,
-        },
-        /*cache*/ false,
-      );
-      if (messageCollection === null) {
-        messageCollection = batch;
-      } else {
-        messageCollection = messageCollection.concat(batch);
-      }
-      earliestMessageID = batch.lastKey();
-      // If reached the beginning of the channel, stop fetching batches
-      if (batch.size < DISCORD_MAX_MESSAGE_FETCH_LIMIT) {
-        break;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to fetch a random quote: ", e);
-    await message.channel.stopTyping();
-    await message.channel.send(
-      "The archives seem to be malfunctioning. Try again later.",
+  const {
+    DISCORD_MESSAGE_CACHE_MAX_SIZE,
+    DISCORD_MESSAGE_FETCH_LIMIT,
+  } = Config.get();
+  const { channel } = message;
+  channel.startTyping();
+  if (channel.messages.cache.size < DISCORD_MESSAGE_CACHE_MAX_SIZE) {
+    console.log(
+      `Message cache has ${channel.messages.cache.size} messages, trying to fetch more for random quote`,
     );
-    return;
+    try {
+      // Try to fetch messages
+      const batchesToFetch =
+        DISCORD_MESSAGE_CACHE_MAX_SIZE / DISCORD_MESSAGE_FETCH_LIMIT;
+      let earliestMessageID = null;
+      for (let i = 0; i < batchesToFetch; i++) {
+        let batch = await channel.messages.fetch(
+          {
+            before: earliestMessageID,
+            limit: DISCORD_MESSAGE_FETCH_LIMIT,
+          },
+          /*cache*/ true,
+        );
+        earliestMessageID = batch.lastKey();
+        // If reached the beginning of the channel, stop fetching batches
+        if (batch.size < DISCORD_MESSAGE_FETCH_LIMIT) {
+          break;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch messages for random quote: ", e);
+      await channel.stopTyping();
+      await channel.send(
+        "The archives seem to be malfunctioning. Try again later.",
+      );
+      return;
+    }
   }
   // Try to get an interesting random message
+  const messageCollection = channel.messages.cache.clone();
   let randomMessage = messageCollection.random();
+  console.log("MESSAGE COLLECTION", messageCollection.size);
   while (messageCollection.size > 1) {
+    console.log("MESSAGE COLLECTION", messageCollection.size);
     if (!isMessageInteresting(randomMessage)) {
       messageCollection.delete(randomMessage.id);
       randomMessage = messageCollection.random();
@@ -48,28 +55,29 @@ async function randomQuote(message) {
       break;
     }
   }
-  lastRandomQuoteByChannel[message.channel.id] = randomMessage;
-  await message.channel.stopTyping();
-  await message.channel.send(
+  LAST_RANDOM_QUOTE_BY_CHANNEL[channel.id] = randomMessage;
+  await channel.stopTyping();
+  await channel.send(
     `Here is something interesting from the archives:\n>>> ${randomMessage.cleanContent}`,
   );
 }
 
 async function randomQuoteAuthor(message) {
-  const quote = lastRandomQuoteByChannel[message.channel.id];
+  const { channel } = message;
+  const quote = LAST_RANDOM_QUOTE_BY_CHANNEL[channel.id];
   if (quote) {
     const embed = new Discord.MessageEmbed()
       .setAuthor(quote.author.username, quote.author.displayAvatarURL())
       .setDescription(`${quote.cleanContent}\n\n[See Context](${quote.url})`)
       .setURL(quote.url)
       .setTimestamp(new Date(quote.createdTimestamp));
-    await message.channel.send(
+    await channel.send(
       `**${quote.author.username}** originally said that brilliant quote.`,
       embed,
     );
     return;
   }
-  await message.channel.send("I don't remember sharing a quote recently.");
+  await channel.send("I don't remember sharing a quote recently.");
 }
 
 function isMessageInteresting(message) {
@@ -82,7 +90,7 @@ function isMessageInteresting(message) {
     return false;
   }
   // Cannot have embeds
-  if (message.embeds) {
+  if (message.embeds.length > 0) {
     return false;
   }
   // Cannot have links
@@ -93,7 +101,7 @@ function isMessageInteresting(message) {
     return false;
   }
   // Cannot have mentions
-  if (message.mentions.users > 0) {
+  if (message.mentions.users.size > 0) {
     return false;
   }
   // Must be at least 30 chars

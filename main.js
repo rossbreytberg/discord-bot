@@ -8,10 +8,6 @@ const TwitchAPI = require("./lib/TwitchAPI.js");
 const WebhookHandlers = require("./src/WebhookHandlers.js");
 const WebhookServer = require("./lib/WebhookServer.js");
 
-const DISCORD_TOKEN = Config.get().DISCORD_TOKEN;
-const TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS = Config.get()
-  .TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS;
-
 async function onMessage(client, message) {
   // Only respond to message where the bot is mentioned
   if (!message.mentions.has(client.user)) {
@@ -63,7 +59,18 @@ async function onMessage(client, message) {
 }
 
 async function init() {
-  const client = new Discord.Client();
+  const {
+    DISCORD_TOKEN,
+    DISCORD_MESSAGE_CACHE_MAX_SIZE,
+    DISCORD_MESSAGE_CACHE_LIFETIME,
+    DISCORD_MESSAGE_SWEEP_INTERVAL,
+    TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS,
+  } = Config.get();
+  const client = new Discord.Client({
+    messageCacheMaxSize: DISCORD_MESSAGE_CACHE_MAX_SIZE,
+    messageCacheLifetime: DISCORD_MESSAGE_CACHE_LIFETIME,
+    messageSweepInterval: DISCORD_MESSAGE_SWEEP_INTERVAL,
+  });
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
   console.log(`Logged in as ${client.user.tag}!`);
