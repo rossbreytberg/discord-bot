@@ -7,7 +7,6 @@ const RANDOM_QUOTE_MAX_TRIES = 100;
 const lastRandomQuoteByChannel = {};
 
 async function randomQuote(message) {
-  await message.channel.send("Searching the archives...");
   message.channel.startTyping();
   let messageCollection = null;
   let earliestMessageID = null;
@@ -52,7 +51,7 @@ async function randomQuote(message) {
   lastRandomQuoteByChannel[message.channel.id] = randomMessage;
   await message.channel.stopTyping();
   await message.channel.send(
-    `Here is something interesting:\n>>> ${randomMessage.cleanContent}`,
+    `Here is something interesting from the archives:\n>>> ${randomMessage.cleanContent}`,
   );
 }
 
