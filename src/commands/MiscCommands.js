@@ -45,9 +45,7 @@ async function randomQuote(message) {
   // Try to get an interesting random message
   const messageCollection = channel.messages.cache.clone();
   let randomMessage = messageCollection.random();
-  console.log("MESSAGE COLLECTION", messageCollection.size);
   while (messageCollection.size > 1) {
-    console.log("MESSAGE COLLECTION", messageCollection.size);
     if (!isMessageInteresting(randomMessage)) {
       messageCollection.delete(randomMessage.id);
       randomMessage = messageCollection.random();
