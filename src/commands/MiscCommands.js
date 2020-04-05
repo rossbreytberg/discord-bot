@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const DISCORD_MAX_MESSAGE_FETCH_LIMIT = 100;
 const RANDOM_QUOTE_BATCHES_TO_FETCH = 50;
-const RANDOM_QUOTE_MAX_TRIES = 100;
+const RANDOM_QUOTE_MAX_TRIES = 500;
 
 const lastRandomQuoteByChannel = {};
 
@@ -40,9 +40,16 @@ async function randomQuote(message) {
     return;
   }
   // Try to get an interesting random message
-  let randomMessage = null;
+  let randomMessage = messageCollection.random();
   for (let i = 0; i < RANDOM_QUOTE_MAX_TRIES; i++) {
-    if (randomMessage === null || !isMessageInteresting(randomMessage)) {
+    if (messageCollection.size === 1) {
+      break;
+    }
+    if (!isMessageInteresting(randomMessage)) {
+      if (messageCollection.size > 1) {
+        messageCollection.delete(randomMessage.id);
+      }
+      console.log("MESSAGE COLLECTION", messageCollection.size);
       randomMessage = messageCollection.random();
     } else {
       break;
@@ -77,12 +84,12 @@ function isMessageInteresting(message) {
   if (message.author.id === message.client.user.id) {
     return false;
   }
-  // Cannot have embeds
-  if (message.embeds) {
+  // Cannot have attachments
+  if (message.attachments && message.attachments.size > 0) {
     return false;
   }
-  // Cannot have attachments
-  if (message.attachments && message.attachments.keyArray().length > 0) {
+  // Cannot have embeds
+  if (message.embeds) {
     return false;
   }
   // Cannot have links
@@ -92,8 +99,16 @@ function isMessageInteresting(message) {
   ) {
     return false;
   }
+  // Cannot have mentions
+  if (message.mentions.users > 0) {
+    return false;
+  }
   // Must be at least 30 chars
   if (message.cleanContent.length < 30) {
+    return false;
+  }
+  // Cannot have quotes
+  if (message.cleanContent.includes(">>>")) {
     return false;
   }
   return true;
