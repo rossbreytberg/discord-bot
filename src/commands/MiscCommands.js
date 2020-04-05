@@ -10,6 +10,9 @@ async function randomQuote(message) {
   } = Config.get();
   const { channel } = message;
   channel.startTyping();
+  console.log(
+    `Finding a random quote. Message cache contains ${channel.messages.cache.size} messages.`,
+  );
   try {
     // Try to fetch messages
     let earliestMessageID = null;
