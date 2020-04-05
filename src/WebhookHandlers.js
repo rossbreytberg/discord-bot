@@ -27,10 +27,10 @@ const handlers = {
     // Remove existing messages for user, if there are any
     const messages = TwitchAlertsDataStore.getMessages(userID);
     await Promise.all(
-      messages.map(async message => {
+      messages.map(async (message) => {
         const { messageID, channelID } = message;
         await Promise.all(
-          discordClient.channels.cache.map(async channel => {
+          discordClient.channels.cache.map(async (channel) => {
             if (channel.id !== channelID) {
               return;
             }
@@ -98,12 +98,12 @@ const handlers = {
         const streamImageFile = fs.createWriteStream(
           TWITCH_STREAM_IMAGE_FILEPATH,
         );
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
           https.get(
             streamImageUrl
               .replace("{height}", DISCORD_IMAGE_HEIGHT)
               .replace("{width}", DISCORD_IMAGE_WIDTH),
-            response => {
+            (response) => {
               const download = response.pipe(streamImageFile);
               download.on("close", resolve);
             },
@@ -118,7 +118,7 @@ const handlers = {
         username.toLowerCase(),
       );
       await Promise.all(
-        discordClient.channels.cache.map(async channel => {
+        discordClient.channels.cache.map(async (channel) => {
           if (
             channel.type === "text" &&
             channelIDsToAlert.includes(channel.id)
@@ -145,7 +145,7 @@ async function updateChannelLiveSymbols(
   liveChannelsAfter,
 ) {
   await Promise.all(
-    discordClient.channels.cache.map(async channel => {
+    discordClient.channels.cache.map(async (channel) => {
       const liveSymbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
         channel.id,
       );
@@ -188,10 +188,11 @@ async function updateChannelLiveSymbols(
 }
 
 module.exports = {
-  getHandlers: discordClient => {
+  getHandlers: (discordClient) => {
     const handlersWithBind = {};
     Object.keys(handlers).forEach(
-      key => (handlersWithBind[key] = handlers[key].bind(this, discordClient)),
+      (key) =>
+        (handlersWithBind[key] = handlers[key].bind(this, discordClient)),
     );
     return handlersWithBind;
   },

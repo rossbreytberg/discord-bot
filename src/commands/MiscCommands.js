@@ -1,8 +1,10 @@
+const Discord = require("discord.js");
+
 const DISCORD_MAX_MESSAGE_FETCH_LIMIT = 100;
 const RANDOM_QUOTE_BATCHES_TO_FETCH = 50;
 const RANDOM_QUOTE_MAX_TRIES = 100;
 
-const lastRandomQuoteAuthorByChannel = {};
+const lastRandomQuoteByChannel = {};
 
 async function randomQuote(message) {
   await message.channel.send("Searching the archives...");
@@ -47,7 +49,7 @@ async function randomQuote(message) {
       break;
     }
   }
-  lastRandomQuoteAuthorByChannel[message.channel.id] = randomMessage.author.id;
+  lastRandomQuoteByChannel[message.channel.id] = randomMessage;
   await message.channel.stopTyping();
   await message.channel.send(
     `Here is something interesting:\n>>> ${randomMessage.cleanContent}`,
@@ -55,15 +57,18 @@ async function randomQuote(message) {
 }
 
 async function randomQuoteAuthor(message) {
-  const lastAuthorID = lastRandomQuoteAuthorByChannel[message.channel.id];
-  if (lastAuthorID) {
-    const lastAuthor = await message.client.users.resolve(lastAuthorID);
-    if (lastAuthor) {
-      await message.channel.send(
-        `**${lastAuthor.username}** originally said that brilliant quote.`,
-      );
-      return;
-    }
+  const quote = lastRandomQuoteByChannel[message.channel.id];
+  if (quote) {
+    const embed = new Discord.MessageEmbed()
+      .setAuthor(quote.author.username, quote.author.displayAvatarURL())
+      .setDescription(`${quote.cleanContent}\n\n[See Context](${quote.url})`)
+      .setURL(quote.url)
+      .setTimestamp(new Date(quote.createdTimestamp));
+    await message.channel.send(
+      `**${quote.author.username}** originally said that brilliant quote.`,
+      embed,
+    );
+    return;
   }
   await message.channel.send("I don't remember sharing a quote recently.");
 }
@@ -88,8 +93,8 @@ function isMessageInteresting(message) {
   ) {
     return false;
   }
-  // Must be at least 25 chars
-  if (message.cleanContent.length < 25) {
+  // Must be at least 30 chars
+  if (message.cleanContent.length < 30) {
     return false;
   }
   return true;
