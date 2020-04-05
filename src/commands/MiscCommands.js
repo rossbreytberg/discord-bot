@@ -2,7 +2,6 @@ const Discord = require("discord.js");
 
 const DISCORD_MAX_MESSAGE_FETCH_LIMIT = 100;
 const RANDOM_QUOTE_BATCHES_TO_FETCH = 50;
-const RANDOM_QUOTE_MAX_TRIES = 500;
 
 const lastRandomQuoteByChannel = {};
 
@@ -41,15 +40,9 @@ async function randomQuote(message) {
   }
   // Try to get an interesting random message
   let randomMessage = messageCollection.random();
-  for (let i = 0; i < RANDOM_QUOTE_MAX_TRIES; i++) {
-    if (messageCollection.size === 1) {
-      break;
-    }
+  while (messageCollection.size > 1) {
     if (!isMessageInteresting(randomMessage)) {
-      if (messageCollection.size > 1) {
-        messageCollection.delete(randomMessage.id);
-      }
-      console.log("MESSAGE COLLECTION", messageCollection.size);
+      messageCollection.delete(randomMessage.id);
       randomMessage = messageCollection.random();
     } else {
       break;
