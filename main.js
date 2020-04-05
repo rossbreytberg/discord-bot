@@ -62,14 +62,14 @@ async function init() {
   const {
     DISCORD_TOKEN,
     DISCORD_MESSAGE_CACHE_MAX_SIZE,
-    DISCORD_MESSAGE_CACHE_LIFETIME,
-    DISCORD_MESSAGE_SWEEP_INTERVAL,
+    DISCORD_MESSAGE_CACHE_LIFETIME_SECONDS,
+    DISCORD_MESSAGE_SWEEP_INTERVAL_SECONDS,
     TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS,
   } = Config.get();
   const client = new Discord.Client({
     messageCacheMaxSize: DISCORD_MESSAGE_CACHE_MAX_SIZE,
-    messageCacheLifetime: DISCORD_MESSAGE_CACHE_LIFETIME,
-    messageSweepInterval: DISCORD_MESSAGE_SWEEP_INTERVAL,
+    messageCacheLifetime: DISCORD_MESSAGE_CACHE_LIFETIME_SECONDS,
+    messageSweepInterval: DISCORD_MESSAGE_SWEEP_INTERVAL_SECONDS,
   });
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
