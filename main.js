@@ -9,8 +9,8 @@ const WebhookHandlers = require("./src/WebhookHandlers.js");
 const WebhookServer = require("./lib/WebhookServer.js");
 
 async function onMessage(client, message) {
-  // Only respond to message where the bot is mentioned
-  if (!message.mentions.has(client.user)) {
+  // Only respond to message where the bot is mentioned explicitly
+  if (!message.mentions.has(client.user) || message.mentions.everyone) {
     return;
   }
   console.log(
@@ -51,7 +51,7 @@ async function onMessage(client, message) {
           "`sub <username>`, " +
           "`unsub <username>`, " +
           "`view_live_symbol`, " +
-          "`set_live_symbol <symbol>`, and" +
+          "`set_live_symbol <symbol>`, and " +
           "`clear_live_symbol`.",
       );
       return;
