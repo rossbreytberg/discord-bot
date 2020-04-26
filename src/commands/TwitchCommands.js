@@ -79,7 +79,7 @@ async function viewLiveSymbol(message) {
     await message.channel.send("A live symbol is not set for this channel.");
     return;
   }
-  await message.channel.send(`The live symbol for this channel is ${symbol}.`);
+  await message.channel.send(`The live symbol for this channel is "${symbol}".`);
 }
 
 async function setLiveSymbol(message, arg) {

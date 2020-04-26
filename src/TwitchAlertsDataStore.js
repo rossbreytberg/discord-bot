@@ -2,7 +2,11 @@ const Config = require("./Config.js");
 const DataStore = require("../lib/DataStore.js");
 
 const CACHE_PATH = Config.get().CACHE_PATH;
-const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
+const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`, {
+  channelUsers: {},
+  channelLiveSymbols: {},
+  userMessages: {},
+});
 
 /**
  * Get all users about which any channel is receiving alerts
@@ -10,10 +14,10 @@ const DATA = new DataStore(`${CACHE_PATH}/cache/twitch-alerts.json`);
  * @returns {Array<string>} usernames
  */
 function getUsers() {
-  const channelUsers = DATA.get("channelUsers");
+  const { channelUsers } = DATA.get();
   const userSet = {};
-  Object.keys(channelUsers).forEach(channelID => {
-    getUsersForChannel(channelID).forEach(username => {
+  Object.keys(channelUsers).forEach((channelID) => {
+    getUsersForChannel(channelID).forEach((username) => {
       userSet[username] = true;
     });
   });
@@ -26,7 +30,7 @@ function getUsers() {
  * @returns {Array<string>} usernames
  */
 function getUsersForChannel(channelID) {
-  const channelUsers = DATA.get("channelUsers");
+  const { channelUsers } = DATA.get();
   return channelUsers[channelID] || [];
 }
 
@@ -36,8 +40,8 @@ function getUsersForChannel(channelID) {
  * @returns {Array<string>} channel IDs
  */
 function getChannelsForUser(username) {
-  const channelUsers = DATA.get("channelUsers");
-  return Object.keys(channelUsers).filter(channelID =>
+  const { channelUsers } = DATA.get();
+  return Object.keys(channelUsers).filter((channelID) =>
     getUsersForChannel(channelID).includes(username),
   );
 }
@@ -50,7 +54,7 @@ function getChannelsForUser(username) {
  * @returns {boolean} True if subscribed successfully, false if it was already subscribed
  */
 function subscribeChannelToUser(channelID, username) {
-  const channelUsers = DATA.get("channelUsers");
+  const { channelUsers } = DATA.get();
   if (channelUsers[channelID] === undefined) {
     channelUsers[channelID] = [];
   }
@@ -58,7 +62,7 @@ function subscribeChannelToUser(channelID, username) {
     return false;
   }
   channelUsers[channelID].push(username);
-  DATA.set("channelUsers", channelUsers);
+  DATA.set({ channelUsers });
   return true;
 }
 
@@ -70,7 +74,7 @@ function subscribeChannelToUser(channelID, username) {
  * @returns {boolean} True if unsubscribed successfully, false if it was already not subscribed
  */
 function unsubscribeChannelToUser(channelID, username) {
-  const channelUsers = DATA.get("channelUsers");
+  const { channelUsers } = DATA.get();
   if (channelUsers[channelID] === undefined) {
     return false;
   }
@@ -78,9 +82,9 @@ function unsubscribeChannelToUser(channelID, username) {
     return false;
   }
   channelUsers[channelID] = channelUsers[channelID].filter(
-    subscribedUsername => subscribedUsername !== username,
+    (subscribedUsername) => subscribedUsername !== username,
   );
-  DATA.set("channelUsers", channelUsers);
+  DATA.set({ channelUsers });
   return true;
 }
 
@@ -90,10 +94,10 @@ function unsubscribeChannelToUser(channelID, username) {
  * @returns {Array<string>}} channel IDs
  */
 function getLiveChannels() {
-  const messages = DATA.get("userMessages");
+  const { userMessages } = DATA.get();
   const channelIDs = {};
-  Object.keys(messages).forEach(userID => {
-    messages[userID].forEach(message => {
+  Object.keys(userMessages).forEach((userID) => {
+    userMessages[userID].forEach((message) => {
       channelIDs[message.channelID] = true;
     });
   });
@@ -107,7 +111,7 @@ function getLiveChannels() {
  * @returns {?string} Symbol like an emoji or character
  */
 function getLiveSymbolForChannel(channelID) {
-  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  const { channelLiveSymbols } = DATA.get();
   return channelLiveSymbols[channelID] || null;
 }
 
@@ -118,9 +122,9 @@ function getLiveSymbolForChannel(channelID) {
  * @param {string} symbol
  */
 function setLiveSymbolForChannel(channelID, symbol) {
-  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  const { channelLiveSymbols } = DATA.get();
   channelLiveSymbols[channelID] = symbol;
-  DATA.set("channelLiveSymbols", channelLiveSymbols);
+  DATA.set({ channelLiveSymbols });
 }
 
 /**
@@ -129,9 +133,9 @@ function setLiveSymbolForChannel(channelID, symbol) {
  * @param {string} channelID
  */
 function clearLiveSymbolForChannel(channelID) {
-  const channelLiveSymbols = DATA.get("channelLiveSymbols");
+  const { channelLiveSymbols } = DATA.get();
   delete channelLiveSymbols[channelID];
-  DATA.set("channelLiveSymbols", channelLiveSymbols);
+  DATA.set({ channelLiveSymbols });
 }
 
 /**
@@ -141,8 +145,8 @@ function clearLiveSymbolForChannel(channelID) {
  * @returns {Array<{channelID: string, messageID: string}>} messages
  */
 function getMessages(userID) {
-  const messages = DATA.get("userMessages");
-  return messages[userID] || [];
+  const { userMessages } = DATA.get();
+  return userMessages[userID] || [];
 }
 
 /**
@@ -152,12 +156,12 @@ function getMessages(userID) {
  * @param {Array<{channelID: string, messageID: string}>} messageList
  */
 function addMessages(userID, messageList) {
-  const messages = DATA.get("userMessages");
-  if (messages[userID] === undefined) {
-    messages[userID] = [];
+  const { userMessages } = DATA.get();
+  if (userMessages[userID] === undefined) {
+    userMessages[userID] = [];
   }
-  messages[userID] = messages[userID].concat(messageList);
-  DATA.set("userMessages", messages);
+  userMessages[userID] = userMessages[userID].concat(messageList);
+  DATA.set({ userMessages });
 }
 
 /**
@@ -166,11 +170,11 @@ function addMessages(userID, messageList) {
  * @param {string} userID
  */
 function removeMessages(userID) {
-  const messages = DATA.get("userMessages");
-  if (messages[userID] !== undefined) {
-    delete messages[userID];
+  const { userMessages } = DATA.get();
+  if (userMessages[userID] !== undefined) {
+    delete userMessages[userID];
   }
-  DATA.set("userMessages", messages);
+  DATA.set({ userMessages });
 }
 
 module.exports = {
