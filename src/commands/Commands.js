@@ -1,7 +1,9 @@
-const MiscCommands = require("./MiscCommands.js");
+const QuoteCommands = require("./QuoteCommands.js");
+const RemindersCommands = require("./RemindersCommands.js");
 const TwitchCommands = require("./TwitchCommands.js");
 
 module.exports = {
-  misc: MiscCommands,
+  quote: QuoteCommands,
+  reminders: RemindersCommands,
   twitch: TwitchCommands,
 };

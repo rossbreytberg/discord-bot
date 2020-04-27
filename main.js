@@ -3,12 +3,17 @@ const Commands = require("./src/commands/Commands.js");
 const Config = require("./src/Config.js");
 const DataStore = require("./lib/DataStore.js");
 const Discord = require("discord.js");
+const RemindersDataStore = require("./src/RemindersDataStore.js");
 const TwitchAlertsDataStore = require("./src/TwitchAlertsDataStore.js");
 const TwitchAPI = require("./lib/TwitchAPI.js");
 const WebhookHandlers = require("./src/WebhookHandlers.js");
 const WebhookServer = require("./lib/WebhookServer.js");
 
 async function onMessage(client, message) {
+  // Log all messages sent by bot
+  if (message.author.id === client.user.id) {
+    console.log(`Sent message "${message.content}"`);
+  }
   // Only respond to message where the bot is mentioned explicitly
   if (!message.mentions.has(client.user) || message.mentions.everyone) {
     return;
@@ -18,11 +23,20 @@ async function onMessage(client, message) {
   );
   const [mention, command, ...args] = message.content.split(" ");
   switch ((command || "").toLowerCase()) {
+    case "reminders":
+      await Commands.reminders.viewReminders(message);
+      return;
+    case "remind":
+      await Commands.reminders.addReminder(message, args.join(" "));
+      return;
+    case "forget":
+      await Commands.reminders.removeReminder(message, args[0]);
+      return;
     case "quote":
-      await Commands.misc.randomQuote(message);
+      await Commands.quote.randomQuote(message);
       return;
     case "who":
-      await Commands.misc.randomQuoteAuthor(message);
+      await Commands.quote.randomQuoteAuthor(message);
       return;
     case "subs":
       await Commands.twitch.listSubscriptions(message);
@@ -45,6 +59,9 @@ async function onMessage(client, message) {
     default:
       await message.channel.send(
         "Valid commands are " +
+          "`reminders`, " +
+          "`remind <user/role> to <do something> in <time>`, " +
+          "`forget <reminder #>`, " +
           "`quote`, " +
           "`who`, " +
           "`subs`, " +
@@ -74,13 +91,16 @@ async function init() {
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
   console.log(`Logged in as ${client.user.tag}!`);
-  // Resubscribe webhooks every 12 hours
+  // Resubscribe webhooks regularly
   await WebhookServer.startServer(WebhookHandlers.getHandlers(client));
   await resubscribeTwitchWebhooks();
   client.setInterval(
     resubscribeTwitchWebhooks,
     TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS * 1000,
   );
+  // Check for any reminders that need to be announced regularly
+  await announceReminders(client);
+  client.setInterval(announceReminders.bind(this, client), 60 * 1000);
   // Stop any typing from previous runs
   await stopAllTyping(client);
 }
@@ -104,6 +124,42 @@ async function resubscribeTwitchWebhooks() {
       userInfo.id,
     );
   });
+}
+
+async function announceReminders(discordClient) {
+  const channels = discordClient.channels.cache.array();
+  for (let channelIdx = 0; channelIdx < channels.length; channelIdx++) {
+    const channel = channels[channelIdx];
+    if (channel.type !== "text") {
+      continue;
+    }
+    const reminders = RemindersDataStore.getRemindersForChannel(channel.id);
+    // Iterate in reverse so removing reminders does not mess up the indexes of the rest
+    for (
+      let reminderIdx = reminders.length - 1;
+      reminderIdx >= 0;
+      reminderIdx--
+    ) {
+      const { content, target, timestamp } = reminders[reminderIdx];
+      if (timestamp <= Date.now()) {
+        let mention = null;
+        switch (target.type) {
+          case "role":
+            mention = `<@&${target.id}>`;
+            break;
+          case "user":
+            mention = `<@${target.id}>`;
+            break;
+        }
+        if (mention !== null) {
+          await channel.send(
+            `${mention}, this is your reminder to **${content}**.`,
+          );
+        }
+        RemindersDataStore.removeReminderForChannel(channel.id, reminderIdx);
+      }
+    }
+  }
 }
 
 init();
