@@ -1,3 +1,4 @@
+const Config = require("../Config.js");
 const Discord = require("discord.js");
 const RemindersDataStore = require("./../RemindersDataStore.js");
 
@@ -51,9 +52,10 @@ async function addReminder(message, input) {
     timeStartIdx,
   );
   const timestamp = getTimestampFromText(input.substring(timeStartIdx + 1)); // +1 to remove starting space
-  if (timestamp - Date.now() < MIN_IN_MS) {
+  const { REMINDERS_CHECK_INTERVAL_SECONDS } = Config.get();
+  if (timestamp - Date.now() < REMINDERS_CHECK_INTERVAL_SECONDS * 1000) {
     await message.channel.send(
-      "Reminders must be set at least a minute from now.",
+      "Reminders must be further in the future. Try again.",
     );
     return;
   }

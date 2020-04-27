@@ -81,6 +81,7 @@ async function init() {
     DISCORD_MESSAGE_CACHE_MAX_SIZE,
     DISCORD_MESSAGE_CACHE_LIFETIME_SECONDS,
     DISCORD_MESSAGE_SWEEP_INTERVAL_SECONDS,
+    REMINDERS_CHECK_INTERVAL_SECONDS,
     TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS,
   } = Config.get();
   const client = new Discord.Client({
@@ -100,7 +101,10 @@ async function init() {
   );
   // Check for any reminders that need to be announced regularly
   await announceReminders(client);
-  client.setInterval(announceReminders.bind(this, client), 60 * 1000);
+  client.setInterval(
+    announceReminders.bind(this, client),
+    REMINDERS_CHECK_INTERVAL_SECONDS * 1000,
+  );
   // Stop any typing from previous runs
   await stopAllTyping(client);
 }
