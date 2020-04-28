@@ -26,11 +26,10 @@ async function addReminder(message, input) {
   const timeStartIdx = Math.max(
     lowercaseInput.lastIndexOf(" at "),
     lowercaseInput.lastIndexOf(" in "),
-    lowercaseInput.lastIndexOf(" on "),
   );
   if (contentStartIdx === -1 || timeStartIdx === -1) {
     await message.channel.send(
-      "Your reminder is formatted incorrectly. Say something like `remind <user> to <do something> in <time amount>`.",
+      "Your reminder is formatted incorrectly. Say something like `remind <user> to <do something> in <time amount>` or `remind <user to <do something> at <time>`.",
     );
     return;
   }
