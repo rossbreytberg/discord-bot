@@ -179,7 +179,9 @@ function getTimestampFromText(timeText) {
         (currentDate.getHours() === hours && currentDate.getMinutes() > minutes)
       ) {
         if (
-          (hours <= 12 && currentDate.getHours() < hours + 12) ||
+          (hours <= 12 &&
+            !value.toLowerCase().includes("am") &&
+            currentDate.getHours() < hours + 12) ||
           (currentDate.getHours() === hours + 12 &&
             currentDate.getMinutes() < minutes)
         ) {
