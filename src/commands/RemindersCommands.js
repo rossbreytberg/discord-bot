@@ -55,9 +55,7 @@ async function addReminder(message, input) {
   const timestamp = getTimestampFromText(input.substring(timeStartIdx + 1)); // +1 to remove starting space
   const { REMINDERS_CHECK_INTERVAL_SECONDS } = Config.get();
   if (timestamp - Date.now() < REMINDERS_CHECK_INTERVAL_SECONDS * 1000) {
-    await message.channel.send(
-      "Reminders time is invalid. Try again.",
-    );
+    await message.channel.send("Reminders time is invalid. Try again.");
     return;
   }
 
