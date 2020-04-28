@@ -3,12 +3,6 @@ const Discord = require("discord.js");
 const RemindersDataStore = require("./../RemindersDataStore.js");
 const Time = require("../../lib/Time.js");
 
-const SEC_IN_MS = 1000;
-const MIN_IN_MS = SEC_IN_MS * 60;
-const HOUR_IN_MS = MIN_IN_MS * 60;
-const DAY_IN_MS = HOUR_IN_MS * 24;
-const WEEK_IN_MS = DAY_IN_MS * 7;
-
 async function viewReminders(message) {
   const reminders = RemindersDataStore.getRemindersForChannel(
     message.channel.id,
