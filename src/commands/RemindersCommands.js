@@ -179,13 +179,13 @@ function getTimestampFromText(timeText) {
         (currentDate.getHours() === hours && currentDate.getMinutes() > minutes)
       ) {
         if (
-          (hours <= 12 &&
-            !value.toLowerCase().includes("am") &&
-            currentDate.getHours() < hours + 12) ||
-          (currentDate.getHours() === hours + 12 &&
-            currentDate.getMinutes() < minutes)
+          !value.toLowerCase().includes("am") &&
+          ((hours <= 12 && currentDate.getHours() < hours + 12) ||
+            (currentDate.getHours() === hours + 12 &&
+              currentDate.getMinutes() < minutes))
         ) {
-          // Hours is less than or equal to 12 and if it is PM, hasn't happened yet today, so add 12 to hours
+          // AM is not explicitly specified,hours is less than or equal to 12 and if it is PM, hasn't happened yet today,
+          // so add 12 to hours
           hours += 12;
         } else {
           // Else this must be tomorrow in AM
