@@ -1,6 +1,7 @@
 const Config = require("../Config.js");
 const Discord = require("discord.js");
 const RemindersDataStore = require("./../RemindersDataStore.js");
+const Time = require("../../lib/Time.js");
 
 const SEC_IN_MS = 1000;
 const MIN_IN_MS = SEC_IN_MS * 60;
@@ -52,10 +53,14 @@ async function addReminder(message, input) {
     contentStartIdx + String(" to ").length,
     timeStartIdx,
   );
-  const timestamp = getTimestampFromText(input.substring(timeStartIdx + 1)); // +1 to remove starting space
+  const timestamp = Time.getTimeFromText(input.substring(timeStartIdx + 1)); // +1 to remove starting space
+  if (timestamp === null) {
+    await message.channel.send("Reminder time is invalid.");
+    return;
+  }
   const { REMINDERS_CHECK_INTERVAL_SECONDS } = Config.get();
   if (timestamp - Date.now() < REMINDERS_CHECK_INTERVAL_SECONDS * 1000) {
-    await message.channel.send("Reminders time is invalid. Try again.");
+    await message.channel.send("Reminder must be further in the future.");
     return;
   }
 
@@ -155,86 +160,6 @@ async function getTargetFromText(message, targetText) {
     return { id: matchingRoles.first().id, type: "role" };
   }
   return null;
-}
-
-function getTimestampFromText(timeText) {
-  const dividerIdx = timeText.indexOf(" ");
-  const type = timeText.substring(0, dividerIdx);
-  const value = timeText.substring(dividerIdx + 1);
-  switch (type) {
-    case "at":
-      let [hours, minutes = 0] = value
-        .split(":")
-        .map((num) => Number.parseInt(num));
-      // If PM was explicitly specified then convert appropriately
-      if (value.toLowerCase().includes("pm") && hours < 12) {
-        hours += 12;
-      }
-      const currentTimestamp = Date.now();
-      const currentDate = new Date(currentTimestamp);
-      let reminderDate = new Date(Date.now());
-      // If time already happened today, figure out if it is PM later today or AM tomorrow
-      if (
-        currentDate.getHours() > hours ||
-        (currentDate.getHours() === hours && currentDate.getMinutes() > minutes)
-      ) {
-        if (
-          !value.toLowerCase().includes("am") &&
-          ((hours <= 12 && currentDate.getHours() < hours + 12) ||
-            (currentDate.getHours() === hours + 12 &&
-              currentDate.getMinutes() < minutes))
-        ) {
-          // AM is not explicitly specified,hours is less than or equal to 12 and if it is PM, hasn't happened yet today,
-          // so add 12 to hours
-          hours += 12;
-        } else {
-          // Else this must be tomorrow in AM
-          reminderDate = new Date(currentTimestamp + DAY_IN_MS);
-        }
-      }
-      reminderDate.setHours(hours, minutes);
-      return reminderDate.valueOf();
-    case "in":
-      const amount = Number.parseFloat(value);
-      const unit = value.substring(String(amount).length).toLowerCase().trim();
-      let multiplier = 1;
-      switch (unit) {
-        case "s":
-        case "sec":
-        case "secs":
-        case "second":
-        case "seconds":
-          multiplier = SEC_IN_MS;
-          break;
-        case "m":
-        case "min":
-        case "mins":
-        case "minute":
-        case "minutes":
-          multiplier = MIN_IN_MS;
-          break;
-        case "h":
-        case "hr":
-        case "hrs":
-        case "hour":
-        case "hours":
-          multiplier = HOUR_IN_MS;
-          break;
-        case "d":
-        case "day":
-        case "days":
-          multiplier = DAY_IN_MS;
-          break;
-        case "w":
-        case "wk":
-        case "wks":
-        case "week":
-        case "weeks":
-          multiplier = WEEK_IN_MS;
-          break;
-      }
-      return Date.now() + amount * multiplier;
-  }
 }
 
 module.exports = {
