@@ -6,6 +6,7 @@ const SEC_IN_MS = 1000;
 const MIN_IN_MS = SEC_IN_MS * 60;
 const HOUR_IN_MS = MIN_IN_MS * 60;
 const DAY_IN_MS = HOUR_IN_MS * 24;
+const WEEK_IN_MS = DAY_IN_MS * 7;
 
 async function viewReminders(message) {
   const reminders = RemindersDataStore.getRemindersForChannel(
@@ -55,7 +56,7 @@ async function addReminder(message, input) {
   const { REMINDERS_CHECK_INTERVAL_SECONDS } = Config.get();
   if (timestamp - Date.now() < REMINDERS_CHECK_INTERVAL_SECONDS * 1000) {
     await message.channel.send(
-      "Reminders must be further in the future. Try again.",
+      "Reminders time is invalid. Try again.",
     );
     return;
   }
@@ -133,7 +134,7 @@ async function getTargetFromText(message, targetText) {
   // Try to search for channel members with the given name (and discriminator if one was provided)
   const matchingMembers = message.channel.members.filter(
     (member) =>
-      member.user.username === name &&
+      member.user.username.toLowerCase() === name.toLowerCase() &&
       (member.user.discriminator === discriminator ||
         discriminator === undefined),
   );
@@ -148,7 +149,9 @@ async function getTargetFromText(message, targetText) {
   const roles = await message.channel.guild.roles.fetch();
   const matchingRoles = roles.cache.filter(
     (role) =>
-      role.mentionable && role.name === name && discriminator === undefined,
+      role.mentionable &&
+      role.name.toLowerCase() === name.toLowerCase() &&
+      discriminator === undefined,
   );
   if (matchingRoles.size === 1) {
     return { id: matchingRoles.first().id, type: "role" };
@@ -191,14 +194,40 @@ function getTimestampFromText(timeText) {
       const amount = Number.parseFloat(value);
       const unit = value.substring(String(amount).length).toLowerCase().trim();
       let multiplier = 1;
-      if (unit.startsWith("s")) {
-        multiplier = SEC_IN_MS;
-      } else if (unit.startsWith("m")) {
-        multiplier = MIN_IN_MS;
-      } else if (unit.startsWith("h")) {
-        multiplier = HOUR_IN_MS;
-      } else if (unit.startsWith("d")) {
-        multiplier = DAY_IN_MS;
+      switch (unit) {
+        case "s":
+        case "sec":
+        case "secs":
+        case "second":
+        case "seconds":
+          multiplier = SEC_IN_MS;
+          break;
+        case "m":
+        case "min":
+        case "mins":
+        case "minute":
+        case "minutes":
+          multiplier = MIN_IN_MS;
+          break;
+        case "h":
+        case "hr":
+        case "hrs":
+        case "hour":
+        case "hours":
+          multiplier = HOUR_IN_MS;
+          break;
+        case "d":
+        case "day":
+        case "days":
+          multiplier = DAY_IN_MS;
+          break;
+        case "w":
+        case "wk":
+        case "wks":
+        case "week":
+        case "weeks":
+          multiplier = WEEK_IN_MS;
+          break;
       }
       return Date.now() + amount * multiplier;
   }
