@@ -166,6 +166,10 @@ function getTimestampFromText(timeText) {
       let [hours, minutes = 0] = value
         .split(":")
         .map((num) => Number.parseInt(num));
+      // If PM was explicitly specified then convert appropriately
+      if (value.toLowerCase().includes("pm") && hours < 12) {
+        hours += 12;
+      }
       const currentTimestamp = Date.now();
       const currentDate = new Date(currentTimestamp);
       let reminderDate = new Date(Date.now());
