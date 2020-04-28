@@ -165,7 +165,7 @@ function getTimestampFromText(timeText) {
   const value = timeText.substring(dividerIdx + 1);
   switch (type) {
     case "at":
-      let [hours, minutes] = value
+      let [hours, minutes = 0] = value
         .split(":")
         .map((num) => Number.parseInt(num));
       const currentTimestamp = Date.now();
