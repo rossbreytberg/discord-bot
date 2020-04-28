@@ -141,7 +141,7 @@ async function getTargetFromText(message, targetText) {
   if (matchingMembers.size === 1) {
     return { id: matchingMembers.first().user.id, type: "user" };
   }
-  // Fallback to searching for roles with the given name
+  // If no matching user, search for roles with the given name
   const roles = await message.channel.guild.roles.fetch();
   const matchingRoles = roles.cache.filter(
     (role) =>
@@ -152,6 +152,16 @@ async function getTargetFromText(message, targetText) {
   if (matchingRoles.size === 1) {
     return { id: matchingRoles.first().id, type: "role" };
   }
+  // If no matching user or role, do a more relaxed search for user
+  if (discriminator === undefined) {
+    const matchingMembers = message.channel.members.filter((member) =>
+      member.user.username.toLowerCase().includes(name.toLowerCase()),
+    );
+    if (matchingMembers.size === 1) {
+      return { id: matchingMembers.first().user.id, type: "user" };
+    }
+  }
+  // No match found, user will see an error
   return null;
 }
 
