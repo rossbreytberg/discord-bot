@@ -101,6 +101,7 @@ async function getReminderText(message, reminder) {
   const dateNow = new Date(Date.now());
   const sameDay =
     date.getDate() === dateNow.getDate() &&
+    date.getMonth() === dateNow.getMonth() &&
     date.getFullYear() === dateNow.getFullYear();
   return `**${targetName}** to **${content}** ${sameDay ? "at" : "on"} **${
     sameDay
