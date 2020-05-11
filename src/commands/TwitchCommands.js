@@ -24,12 +24,12 @@ async function subscribe(message, args) {
     );
     return;
   }
-  const userInfo = await TwitchAPI.getUserInfo(username);
-  if (!userInfo) {
-    await message.channel.send("Could not find a Twitch user with that name.");
-    return;
-  }
   usernames.forEach(async (username) => {
+    const userInfo = await TwitchAPI.getUserInfo(username);
+    if (!userInfo) {
+      await message.channel.send(`**${username}** is not a valid Twitch user.`);
+      return;
+    }
     const previousChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
       username,
     );
