@@ -65,7 +65,9 @@ async function unsubscribe(message, args) {
     const userInfo = await TwitchAPI.getUserInfo(username);
     if (!success) {
       await message.channel.send(
-        `**${userInfo.display_name}** was already not subscribed to.`,
+        `**${
+          userInfo?.display_name || username
+        }** was already not subscribed to.`,
       );
       return;
     }
