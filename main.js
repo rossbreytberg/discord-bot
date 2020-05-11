@@ -36,7 +36,7 @@ async function onMessage(client, message) {
       }
       [_mention, command, ...args] = message.content.split(" ");
       console.log(
-        `Mentioned by ${message.author.username} in channel ${channel.id}: "${message.content}"`,
+        `Mentioned by ${message.author.username} in channel ${message.channel.id}: "${message.content}"`,
       );
       break;
     default:
