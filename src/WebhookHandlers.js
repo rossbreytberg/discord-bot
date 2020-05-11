@@ -118,14 +118,10 @@ const handlers = {
         username.toLowerCase(),
       );
       await Promise.all(
-        discordClient.channels.cache.map(async (channel) => {
-          if (
-            channel.type === "text" &&
-            channelIDsToAlert.includes(channel.id)
-          ) {
-            const message = await channel.send(content, richEmbed);
-            messages.push({ channelID: channel.id, messageID: message.id });
-          }
+        channelIDsToAlert.map(async (channelID) => {
+          const channel = await discordClient.channels.fetch(channelID);
+          const message = await channel.send(content, richEmbed);
+          messages.push({ channelID: channel.id, messageID: message.id });
         }),
       );
       TwitchAlertsDataStore.addMessages(userID, messages);

@@ -100,7 +100,6 @@ async function init() {
     TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS * 1000,
   );
   // Check for any reminders that need to be announced regularly
-  await fetchChannelsForReminders(client);
   await announceReminders(client);
   client.setInterval(
     announceReminders.bind(this, client),
@@ -132,7 +131,11 @@ async function resubscribeTwitchWebhooks() {
 }
 
 async function announceReminders(discordClient) {
-  const channels = discordClient.channels.cache.array();
+  const channels = await Promise.all(
+    RemindersDataStore.getChannelsWithReminders().map(
+      async (channelID) => await discordClient.channels.fetch(channelID),
+    ),
+  );
   for (let channelIdx = 0; channelIdx < channels.length; channelIdx++) {
     const channel = channels[channelIdx];
     if (channel.type !== "dm" && channel.type !== "text") {
@@ -165,15 +168,6 @@ async function announceReminders(discordClient) {
       }
     }
   }
-}
-
-async function fetchChannelsForReminders(discordClient) {
-  const channelIDs = RemindersDataStore.getChannelsWithReminders();
-  await Promise.all(
-    channelIDs.map(
-      async (channelID) => await discordClient.channels.fetch(channelID),
-    ),
-  );
 }
 
 init();

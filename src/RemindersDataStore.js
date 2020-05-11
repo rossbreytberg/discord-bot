@@ -7,7 +7,7 @@ const DATA = new DataStore(`${CACHE_PATH}/cache/reminders.json`, {
 });
 
 /**
- * Get all channel IDs that have at least one reminder active
+ * Get all channels that have at least one reminder active
  *
  * @returns {Array<string>} channelIDs
  */

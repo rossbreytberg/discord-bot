@@ -11,12 +11,12 @@ async function listSubscriptions(message) {
   }
   await message.channel.send(
     "Currently subscribed to Twitch alerts for " +
-      users.map(username => `**${username}**`).join(", "),
+      users.map((username) => `**${username}**`).join(", "),
   );
 }
 
 async function subscribe(message, args) {
-  const usernames = args.map(arg => arg.toLowerCase());
+  const usernames = args.map((arg) => arg.toLowerCase());
   if (usernames.length === 0) {
     await message.channel.send(
       "Please provide a username to subscribe to. " +
@@ -24,7 +24,10 @@ async function subscribe(message, args) {
     );
     return;
   }
-  usernames.forEach(async username => {
+  usernames.forEach(async (username) => {
+    const previousChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
+      username,
+    );
     const success = TwitchAlertsDataStore.subscribeChannelToUser(
       message.channel.id,
       username,
@@ -36,7 +39,9 @@ async function subscribe(message, args) {
       );
       return;
     }
-    await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
+    if (previousChannelsForUser.length === 0) {
+      await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
+    }
     await message.channel.send(
       `Successfully subscribed to **${userInfo.display_name}**.`,
     );
@@ -44,7 +49,7 @@ async function subscribe(message, args) {
 }
 
 async function unsubscribe(message, args) {
-  const usernames = args.map(arg => arg.toLowerCase());
+  const usernames = args.map((arg) => arg.toLowerCase());
   if (usernames.length === 0) {
     await message.channel.send(
       "Please provide a username to unsubscribe from. " +
@@ -52,7 +57,7 @@ async function unsubscribe(message, args) {
     );
     return;
   }
-  usernames.forEach(async username => {
+  usernames.forEach(async (username) => {
     const success = TwitchAlertsDataStore.unsubscribeChannelToUser(
       message.channel.id,
       username,
@@ -64,7 +69,12 @@ async function unsubscribe(message, args) {
       );
       return;
     }
-    await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
+    const remainingChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
+      username,
+    );
+    if (remainingChannelsForUser.length === 0) {
+      await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
+    }
     await message.channel.send(
       `Successfully unsubscribed from **${userInfo.display_name}**.`,
     );
@@ -72,6 +82,12 @@ async function unsubscribe(message, args) {
 }
 
 async function viewLiveSymbol(message) {
+  if (message.channel.type === "dm") {
+    await message.channel.send(
+      "Live symbols are only for server channels, not for direct message threads.",
+    );
+    return;
+  }
   const symbol = TwitchAlertsDataStore.getLiveSymbolForChannel(
     message.channel.id,
   );
@@ -79,10 +95,18 @@ async function viewLiveSymbol(message) {
     await message.channel.send("A live symbol is not set for this channel.");
     return;
   }
-  await message.channel.send(`The live symbol for this channel is "${symbol}".`);
+  await message.channel.send(
+    `The live symbol for this channel is "${symbol}".`,
+  );
 }
 
 async function setLiveSymbol(message, arg) {
+  if (message.channel.type === "dm") {
+    await message.channel.send(
+      "Live symbols are only for server channels, not for direct message threads.",
+    );
+    return;
+  }
   if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
     await message.channel.send(
       "Cannot set a live symbol for this channel while someone is currently live.",
@@ -98,6 +122,12 @@ async function setLiveSymbol(message, arg) {
 }
 
 async function clearLiveSymbol(message) {
+  if (message.channel.type === "dm") {
+    await message.channel.send(
+      "Live symbols are only for server channels, not for direct message threads.",
+    );
+    return;
+  }
   if (TwitchAlertsDataStore.getLiveChannels().includes(message.channel.id)) {
     await message.channel.send(
       "Cannot clear the live symbol for this channel while someone is currently live.",
