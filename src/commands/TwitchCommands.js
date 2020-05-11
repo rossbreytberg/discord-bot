@@ -24,6 +24,11 @@ async function subscribe(message, args) {
     );
     return;
   }
+  const userInfo = await TwitchAPI.getUserInfo(username);
+  if (!userInfo) {
+    await message.channel.send("Could not find a Twitch user with that name.");
+    return;
+  }
   usernames.forEach(async (username) => {
     const previousChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
       username,
@@ -32,7 +37,6 @@ async function subscribe(message, args) {
       message.channel.id,
       username,
     );
-    const userInfo = await TwitchAPI.getUserInfo(username);
     if (!success) {
       await message.channel.send(
         `**${userInfo.display_name}** was already subscribed to.`,
