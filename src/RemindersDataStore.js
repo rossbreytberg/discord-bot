@@ -7,6 +7,16 @@ const DATA = new DataStore(`${CACHE_PATH}/cache/reminders.json`, {
 });
 
 /**
+ * Get all channel IDs that have at least one reminder active
+ *
+ * @returns {Array<string>} channelIDs
+ */
+function getChannelsWithReminders() {
+  const { channelReminders } = DATA.get();
+  return Object.keys(channelReminders);
+}
+
+/**
  * Get all reminders set for a given channel
  *
  * @returns {Array<Object>} Reminders
@@ -56,6 +66,7 @@ function removeReminderForChannel(channelID, reminderIdx) {
 }
 
 module.exports = {
+  getChannelsWithReminders,
   getRemindersForChannel,
   addReminderForChannel,
   removeReminderForChannel,

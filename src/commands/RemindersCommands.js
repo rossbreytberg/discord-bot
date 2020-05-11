@@ -91,9 +91,15 @@ async function getReminderText(message, reminder) {
       }
       break;
     case "user":
-      const member = message.channel.members.get(target.id);
-      if (member) {
-        targetName = member.user.username;
+      switch (message.channel.type) {
+        case "dm":
+          targetName = message.channel.recipient.username;
+          break;
+        case "text":
+          const member = message.channel.members.get(target.id);
+          if (member) {
+            targetName = member.user.username;
+          }
       }
       break;
   }
@@ -127,10 +133,24 @@ async function getTargetFromText(message, targetText) {
   if (targetText.startsWith("@")) {
     targetText = targetText.substring(1);
   }
-  if (targetText === "me" || targetText === "myself") {
+  const [name, discriminator] = targetText.split("#");
+  // If message sender uses a personal pronoun or
+  // this is a DM and the sender uses their own name
+  // then they are the target
+  if (
+    targetText === "me" ||
+    targetText === "myself" ||
+    (message.channel.type === "dm" &&
+      message.channel.recipient.username
+        .toLowerCase()
+        .includes(name.toLowerCase()))
+  ) {
     return { id: message.author.id, type: "user" };
   }
-  const [name, discriminator] = targetText.split("#");
+  // If this is a DM and there was no username match above, no valid target
+  if (message.channel.type == "dm") {
+    return null;
+  }
   // Try to search for channel members with the given name (and discriminator if one was provided)
   const matchingMembers = message.channel.members.filter(
     (member) =>
@@ -139,7 +159,7 @@ async function getTargetFromText(message, targetText) {
         discriminator === undefined),
   );
   if (matchingMembers.size > 1) {
-    // If more than one user matches, user will see an error message.
+    // If more than one user matches, user will see an error message
     return null;
   }
   if (matchingMembers.size === 1) {

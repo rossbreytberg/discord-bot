@@ -100,6 +100,7 @@ async function init() {
     TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS * 1000,
   );
   // Check for any reminders that need to be announced regularly
+  await fetchChannelsForReminders(client);
   await announceReminders(client);
   client.setInterval(
     announceReminders.bind(this, client),
@@ -134,7 +135,7 @@ async function announceReminders(discordClient) {
   const channels = discordClient.channels.cache.array();
   for (let channelIdx = 0; channelIdx < channels.length; channelIdx++) {
     const channel = channels[channelIdx];
-    if (channel.type !== "text") {
+    if (channel.type !== "dm" && channel.type !== "text") {
       continue;
     }
     const reminders = RemindersDataStore.getRemindersForChannel(channel.id);
@@ -164,6 +165,15 @@ async function announceReminders(discordClient) {
       }
     }
   }
+}
+
+async function fetchChannelsForReminders(discordClient) {
+  const channelIDs = RemindersDataStore.getChannelsWithReminders();
+  await Promise.all(
+    channelIDs.map(
+      async (channelID) => await discordClient.channels.fetch(channelID),
+    ),
+  );
 }
 
 init();
