@@ -12,16 +12,38 @@ const WebhookServer = require("./lib/WebhookServer.js");
 async function onMessage(client, message) {
   // Log all messages sent by bot
   if (message.author.id === client.user.id) {
-    console.log(`Sent message "${message.content}"`);
-  }
-  // Only respond to message where the bot is mentioned explicitly
-  if (!message.mentions.has(client.user) || message.mentions.everyone) {
+    console.log(`Sent message: "${message.content}"`);
     return;
   }
-  console.log(
-    `Mentioned by ${message.author.username} in message "${message.content}"`,
-  );
-  const [mention, command, ...args] = message.content.split(" ");
+  let _mention = null;
+  let command = null;
+  let args = null;
+  switch (message.channel.type) {
+    case "dm":
+      if (message.mentions.has(client.user)) {
+        [_mentions, command, ...args] = message.content.split(" ");
+      } else {
+        [command, ...args] = message.content.split(" ");
+      }
+      console.log(
+        `Direct messaged by ${message.author.username}: "${message.content}"`,
+      );
+      break;
+    case "text":
+      // Only respond to message where the bot is mentioned explicitly
+      if (!message.mentions.has(client.user) || message.mentions.everyone) {
+        return;
+      }
+      [_mention, command, ...args] = message.content.split(" ");
+      console.log(
+        `Mentioned by ${message.author.username} in channel ${channel.id}: "${message.content}"`,
+      );
+      break;
+    default:
+      console.log(
+        `Received message from ${message.author.username} in unknown channel type "${message.channel.type}": "${message.content}"`,
+      );
+  }
   switch ((command || "").toLowerCase()) {
     case "reminders":
       await Commands.reminders.viewReminders(message);

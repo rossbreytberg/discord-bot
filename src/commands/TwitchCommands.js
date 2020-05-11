@@ -66,7 +66,7 @@ async function unsubscribe(message, args) {
     if (!success) {
       await message.channel.send(
         `**${
-          userInfo?.display_name || username
+          (userInfo && userInfo.display_name) || username
         }** was already not subscribed to.`,
       );
       return;
