@@ -29,21 +29,15 @@ const handlers = {
     await Promise.all(
       messages.map(async (message) => {
         const { messageID, channelID } = message;
-        await Promise.all(
-          discordClient.channels.cache.map(async (channel) => {
-            if (channel.id !== channelID) {
-              return;
-            }
-            try {
-              const message = await channel.messages.fetch(messageID);
-              if (message) {
-                await message.delete();
-              }
-            } catch (error) {
-              console.error("Failed to delete message", messageID, error);
-            }
-          }),
-        );
+        const channel = await discordClient.channels.fetch(channelID);
+        try {
+          const message = await channel.messages.fetch(messageID);
+          if (message) {
+            await message.delete();
+          }
+        } catch (error) {
+          console.error("Failed to delete message", messageID, error);
+        }
       }),
     );
     TwitchAlertsDataStore.removeMessages(userID);
