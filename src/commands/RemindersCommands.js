@@ -73,7 +73,7 @@ async function removeReminder(message, reminderNum) {
     message.channel.id,
     reminderIdx,
   );
-  if (reminder === null) {
+  if (reminder == null) {
     await message.channel.send("There is no reminder with that number.");
   }
   const reminderText = await getReminderText(message, reminder);
