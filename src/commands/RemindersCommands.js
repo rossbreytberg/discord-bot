@@ -67,6 +67,16 @@ async function addReminder(message, input) {
   await message.channel.send(`Created a reminder for ${reminderText}.`);
 }
 
+async function removeReminders(message, reminderNums) {
+  const sortedReminderNums = reminderNums
+    .map((num) => parseInt(num))
+    .filter((num) => !isNaN(num))
+    .sort((a, b) => b - a);
+  for (let i = 0; i < sortedReminderNums.length; i++) {
+    await removeReminder(message, sortedReminderNums[i]);
+  }
+}
+
 async function removeReminder(message, reminderNum) {
   const reminderIdx = reminderNum - 1;
   const reminder = RemindersDataStore.removeReminderForChannel(
@@ -74,7 +84,10 @@ async function removeReminder(message, reminderNum) {
     reminderIdx,
   );
   if (reminder == null) {
-    await message.channel.send("There is no reminder with that number.");
+    await message.channel.send(
+      `There is no reminder with number **${reminderNum}**.`,
+    );
+    return;
   }
   const reminderText = await getReminderText(message, reminder);
   await message.channel.send(`Cleared reminder for ${reminderText}.`);
@@ -192,5 +205,5 @@ async function getTargetFromText(message, targetText) {
 module.exports = {
   viewReminders,
   addReminder,
-  removeReminder,
+  removeReminders,
 };

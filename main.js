@@ -53,7 +53,7 @@ async function onMessage(client, message) {
       await Commands.reminders.addReminder(message, args.join(" "));
       return;
     case "forget":
-      await Commands.reminders.removeReminder(message, args[0]);
+      await Commands.reminders.removeReminders(message, args);
       return;
     case "quote":
       await Commands.quote.randomQuote(message);
