@@ -18,12 +18,13 @@ async function onMessage(client, message) {
   let _mention = null;
   let command = null;
   let args = null;
+  const messageParts = message.content.split(" ").filter((part) => part !== "");
   switch (message.channel.type) {
     case "dm":
       if (message.mentions.has(client.user)) {
-        [_mentions, command, ...args] = message.content.split(" ");
+        [_mentions, command, ...args] = messageParts;
       } else {
-        [command, ...args] = message.content.split(" ");
+        [command, ...args] = messageParts;
       }
       console.log(
         `Direct messaged by ${message.author.username}: "${message.content}"`,
@@ -34,7 +35,7 @@ async function onMessage(client, message) {
       if (!message.mentions.has(client.user) || message.mentions.everyone) {
         return;
       }
-      [_mention, command, ...args] = message.content.split(" ");
+      [_mention, command, ...args] = messageParts;
       console.log(
         `Mentioned by ${message.author.username} in channel ${message.channel.id}: "${message.content}"`,
       );
