@@ -109,9 +109,9 @@ async function getReminderText(message, reminder) {
           targetName = message.channel.recipient.username;
           break;
         case "text":
-          const member = message.channel.members.get(target.id);
+          const member = await message.channel.guild.members.fetch(target.id);
           if (member) {
-            targetName = member.user.username;
+            targetName = member.displayName;
           }
       }
       break;
@@ -164,12 +164,16 @@ async function getTargetFromText(message, targetText) {
   if (message.channel.type == "dm") {
     return null;
   }
-  // Try to search for channel members with the given name (and discriminator if one was provided)
+  // Try to search for channel members with the given username or nickname (and discriminator if one was provided)
+  await message.channel.guild.members.fetch();
   const matchingMembers = message.channel.members.filter(
     (member) =>
-      member.user.username.toLowerCase() === name.toLowerCase() &&
-      (member.user.discriminator === discriminator ||
-        discriminator === undefined),
+      (member.nickname != null &&
+        member.nickname.toLowerCase() === name.toLowerCase() &&
+        discriminator === undefined) ||
+      (member.user.username.toLowerCase() === name.toLowerCase() &&
+        (member.user.discriminator === discriminator ||
+          discriminator === undefined)),
   );
   if (matchingMembers.size > 1) {
     // If more than one user matches, user will see an error message
@@ -191,8 +195,11 @@ async function getTargetFromText(message, targetText) {
   }
   // If no matching user or role, do a more relaxed search for user
   if (discriminator === undefined) {
-    const matchingMembers = message.channel.members.filter((member) =>
-      member.user.username.toLowerCase().includes(name.toLowerCase()),
+    const matchingMembers = message.channel.members.filter(
+      (member) =>
+        (member.nickname != null &&
+          member.nickname.toLowerCase().includes(name.toLowerCase())) ||
+        member.user.username.toLowerCase().includes(name.toLowerCase()),
     );
     if (matchingMembers.size === 1) {
       return { id: matchingMembers.first().user.id, type: "user" };
