@@ -108,10 +108,8 @@ async function createMessagesAboutUser(
   if (type !== "live") {
     return;
   }
-
   const gameID = overrideGameID || streamGameID;
   const title = overrideTitle || streamTitle;
-
   const [gameInfo, userInfo] = await Promise.all([
     TwitchAPI.getGameInfo(gameID),
     TwitchAPI.getUserInfo(username),
