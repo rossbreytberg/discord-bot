@@ -6,8 +6,8 @@ const Discord = require("discord.js");
 const RemindersDataStore = require("./src/RemindersDataStore.js");
 const TwitchAlertsDataStore = require("./src/TwitchAlertsDataStore.js");
 const TwitchAPI = require("./lib/TwitchAPI.js");
-const WebhookHandlers = require("./src/WebhookHandlers.js");
-const WebhookServer = require("./lib/WebhookServer.js");
+const TwitchEventSubHandlers = require("./src/TwitchEventSubHandlers.js");
+const TwitchEventSubServer = require("./lib/TwitchEventSubServer.js");
 
 async function onMessage(client, message) {
   // Log all messages sent by bot
@@ -105,7 +105,6 @@ async function init() {
     DISCORD_MESSAGE_CACHE_LIFETIME_SECONDS,
     DISCORD_MESSAGE_SWEEP_INTERVAL_SECONDS,
     REMINDERS_CHECK_INTERVAL_SECONDS,
-    TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS,
   } = Config.get();
   const client = new Discord.Client({
     messageCacheMaxSize: DISCORD_MESSAGE_CACHE_MAX_SIZE,
@@ -115,13 +114,11 @@ async function init() {
   client.on("message", onMessage.bind(this, client));
   await client.login(DISCORD_TOKEN);
   console.log(`Logged in as ${client.user.tag}!`);
-  // Resubscribe webhooks regularly
-  await WebhookServer.startServer(WebhookHandlers.getHandlers(client));
-  await resubscribeTwitchWebhooks();
-  client.setInterval(
-    resubscribeTwitchWebhooks,
-    TWITCH_WEBHOOK_RESUBSCRIBE_SECONDS * 1000,
+  // Refresh Twitch EventSub subscriptions on startup
+  await TwitchEventSubServer.startServer(
+    TwitchEventSubHandlers.getEventHandler(client),
   );
+  await refreshTwitchSubscriptions();
   // Check for any reminders that need to be announced regularly
   await announceReminders(client);
   client.setInterval(
@@ -142,14 +139,11 @@ async function stopAllTyping(client) {
   );
 }
 
-async function resubscribeTwitchWebhooks() {
-  await TwitchAPI.clearWebhookSubscriptions();
+async function refreshTwitchSubscriptions() {
+  await TwitchAPI.clearSubscriptions();
   TwitchAlertsDataStore.getUsers().forEach(async (username) => {
     const userInfo = await TwitchAPI.getUserInfo(username);
-    const subscribed = await TwitchAPI.setStreamChangeSubscription(
-      "subscribe",
-      userInfo.id,
-    );
+    await TwitchAPI.createStreamChangeSubscription(userInfo.id);
   });
 }
 

@@ -30,9 +30,8 @@ async function subscribe(message, args) {
       await message.channel.send(`**${username}** is not a valid Twitch user.`);
       return;
     }
-    const previousChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
-      username,
-    );
+    const previousChannelsForUser =
+      TwitchAlertsDataStore.getChannelsForUser(username);
     const success = TwitchAlertsDataStore.subscribeChannelToUser(
       message.channel.id,
       username,
@@ -44,7 +43,7 @@ async function subscribe(message, args) {
       return;
     }
     if (previousChannelsForUser.length === 0) {
-      await TwitchAPI.setStreamChangeSubscription("subscribe", userInfo.id);
+      await TwitchAPI.createStreamChangeSubscription(userInfo.id);
     }
     await message.channel.send(
       `Successfully subscribed to **${userInfo.display_name}**.`,
@@ -75,11 +74,10 @@ async function unsubscribe(message, args) {
       );
       return;
     }
-    const remainingChannelsForUser = TwitchAlertsDataStore.getChannelsForUser(
-      username,
-    );
+    const remainingChannelsForUser =
+      TwitchAlertsDataStore.getChannelsForUser(username);
     if (remainingChannelsForUser.length === 0) {
-      await TwitchAPI.setStreamChangeSubscription("unsubscribe", userInfo.id);
+      await TwitchAPI.deleteStreamChangeSubscription(userInfo.id);
     }
     await message.channel.send(
       `Successfully unsubscribed from **${userInfo.display_name}**.`,
