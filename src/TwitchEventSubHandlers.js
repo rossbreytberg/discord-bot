@@ -17,7 +17,7 @@ const TWITCH_STREAM_IMAGE_FILEPATH = `${CACHE_PATH}/cache/${TWITCH_STREAM_IMAGE_
 const eventHandlers = {
   "channel.update": async (discordClient, subscription, event) => {
     const {
-      broadcaster_users_id: userID,
+      broadcaster_user_id: userID,
       category_id: overrideGameID,
       title: overrideTitle,
     } = event;
@@ -34,9 +34,6 @@ const eventHandlers = {
       userID,
       overrideGameID,
       overrideTitle,
-    );
-    console.log(
-      `Channel updated with gameID ${overrideGameID} and title "${title}"`,
     );
   },
   "stream.online": async (discordClient, subscription, event) => {
@@ -114,7 +111,7 @@ async function createMessagesAboutUser(
 
   const gameID = overrideGameID || streamGameID;
   const title = overrideTitle || streamTitle;
-  console.log(`Messages create with gameID ${gameID} and title "${title}"`);
+
   const [gameInfo, userInfo] = await Promise.all([
     TwitchAPI.getGameInfo(gameID),
     TwitchAPI.getUserInfo(username),
