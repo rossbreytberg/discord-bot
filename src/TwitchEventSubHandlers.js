@@ -35,6 +35,9 @@ const eventHandlers = {
       overrideGameID,
       overrideTitle,
     );
+    console.log(
+      `Channel updated with gameID ${overrideGameID} and title "${title}"`,
+    );
   },
   "stream.online": async (discordClient, subscription, event) => {
     if (event.type !== "live") {
@@ -111,7 +114,7 @@ async function createMessagesAboutUser(
 
   const gameID = overrideGameID || streamGameID;
   const title = overrideTitle || streamTitle;
-
+  console.log(`Messages create with gameID ${gameID} and title "${title}"`);
   const [gameInfo, userInfo] = await Promise.all([
     TwitchAPI.getGameInfo(gameID),
     TwitchAPI.getUserInfo(username),
