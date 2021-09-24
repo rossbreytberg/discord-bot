@@ -16,14 +16,25 @@ const TWITCH_STREAM_IMAGE_FILEPATH = `${CACHE_PATH}/cache/${TWITCH_STREAM_IMAGE_
 
 const eventHandlers = {
   "channel.update": async (discordClient, subscription, event) => {
-    const userID = event.broadcaster_user_id;
+    const {
+      broadcaster_users_id: userID,
+      category_id: overrideGameID,
+      title: overrideTitle,
+    } = event;
     const messages = TwitchAlertsDataStore.getMessages(userID);
     if (messages.length === 0) {
       // If no existing messages about the user, nothing to update
       return;
     }
     await clearMessagesAboutUser(discordClient, userID);
-    await createMessagesAboutUser(discordClient, userID);
+    // Pass in game ID and title from this event because the streams API
+    // used in this function has a big delay before it updates
+    await createMessagesAboutUser(
+      discordClient,
+      userID,
+      overrideGameID,
+      overrideTitle,
+    );
   },
   "stream.online": async (discordClient, subscription, event) => {
     if (event.type !== "live") {
@@ -74,7 +85,12 @@ async function clearMessagesAboutUser(discordClient, userID) {
   TwitchAlertsDataStore.removeMessages(userID);
 }
 
-async function createMessagesAboutUser(discordClient, userID) {
+async function createMessagesAboutUser(
+  discordClient,
+  userID,
+  overrideGameID,
+  overrideTitle,
+) {
   const stream = await TwitchAPI.getStreamInfo(userID);
   if (!stream) {
     console.error(
@@ -83,15 +99,18 @@ async function createMessagesAboutUser(discordClient, userID) {
     return;
   }
   const {
-    game_id: gameID,
+    game_id: streamGameID,
     thumbnail_url: streamImageUrl,
-    title,
+    title: streamTitle,
     type,
     user_name: username,
   } = stream;
   if (type !== "live") {
     return;
   }
+
+  const gameID = overrideGameID || streamGameID;
+  const title = overrideTitle || streamTitle;
 
   const [gameInfo, userInfo] = await Promise.all([
     TwitchAPI.getGameInfo(gameID),
