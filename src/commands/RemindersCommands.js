@@ -116,6 +116,7 @@ async function getReminderText(message, reminder) {
       }
       break;
   }
+  const { REMINDERS_LOCALE, REMINDERS_TIME_ZONE } = Config.get();
   const date = new Date(timestamp);
   const dateNow = new Date(Date.now());
   const sameDay =
@@ -124,8 +125,15 @@ async function getReminderText(message, reminder) {
     date.getFullYear() === dateNow.getFullYear();
   return `**${targetName}** to **${content}** ${sameDay ? "at" : "on"} **${
     sameDay
-      ? date.toLocaleTimeString([], { timeStyle: "short" })
-      : date.toLocaleString([], { dateStyle: "short", timeStyle: "short" })
+      ? date.toLocaleTimeString(REMINDERS_LOCALE || [], {
+          timeStyle: "short",
+          timeZone: REMINDERS_TIME_ZONE || undefined,
+        })
+      : date.toLocaleString(REMINDERS_LOCALE || [], {
+          dateStyle: "short",
+          timeStyle: "short",
+          timeZone: REMINDERS_TIME_ZONE || undefined,
+        })
   }**`;
 }
 
