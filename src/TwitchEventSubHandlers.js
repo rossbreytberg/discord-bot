@@ -11,6 +11,8 @@ const DISCORD_IMAGE_WIDTH = 1920;
 const DISCORD_THUMBNAIL_HEIGHT = 400;
 const DISCORD_THUMBNAIL_WIDTH = 300;
 const TWITCH_COLOR = "#6441a5";
+const TWITCH_STREAM_FETCH_RETRY_INTERVAL_MS = 10000;
+const TWITCH_STREAM_FETCH_RETRY_COUNT = 6;
 const TWITCH_STREAM_IMAGE_FILE = "twitch-stream-image.jpg";
 const TWITCH_STREAM_IMAGE_FILEPATH = `${CACHE_PATH}/cache/${TWITCH_STREAM_IMAGE_FILE}`;
 
@@ -90,12 +92,32 @@ async function createMessagesAboutUser(
   userID,
   overrideGameID,
   overrideTitle,
+  streamFetchRetryCount,
 ) {
   const stream = await TwitchAPI.getStreamInfo(userID);
   if (!stream) {
     console.error(
       `Cannot create message because no stream exists for user "${userID}"`,
     );
+    if (
+      streamFetchRetryCount == null ||
+      streamFetchRetryCount < TWITCH_STREAM_FETCH_RETRY_COUNT
+    ) {
+      setTimeout(
+        () =>
+          createMessagesAboutUser(
+            discordClient,
+            userID,
+            overrideGameID,
+            overrideTitle,
+            (streamFetchRetryCount || 0) + 1,
+          ),
+        TWITCH_STREAM_FETCH_RETRY_INTERVAL_MS,
+      );
+      console.log(
+        `Retrying create message for user "${userID}" in ${TWITCH_STREAM_FETCH_RETRY_INTERVAL_MS}ms`,
+      );
+    }
     return;
   }
   const {
@@ -106,6 +128,9 @@ async function createMessagesAboutUser(
     user_name: username,
   } = stream;
   if (type !== "live") {
+    console.error(
+      `Cannot create message because stream type is not "live" for user "${userID}"`,
+    );
     return;
   }
   const gameID = overrideGameID || streamGameID;
