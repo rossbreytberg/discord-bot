@@ -143,7 +143,9 @@ async function refreshTwitchSubscriptions() {
   await TwitchAPI.clearSubscriptions();
   TwitchAlertsDataStore.getUsers().forEach(async (username) => {
     const userInfo = await TwitchAPI.getUserInfo(username);
-    await TwitchAPI.createStreamChangeSubscription(userInfo.id);
+    if (userInfo != null) {
+      await TwitchAPI.createStreamChangeSubscription(userInfo.id);
+    }
   });
 }
 
